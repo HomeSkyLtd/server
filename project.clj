@@ -1,5 +1,5 @@
 (defproject server "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "Server that runs the Machine Learning algorithms."
   :url "http://example.com/FIXME"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.7.0"]
