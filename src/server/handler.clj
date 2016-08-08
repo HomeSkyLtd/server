@@ -1,10 +1,12 @@
 (ns server.handler
-  (:require [compojure.core :refer :all]
-            [compojure.route :as route]
-            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
-            [ring.middleware.session :refer [wrap-session]]
-			[ring.util.response :refer :all]
-			[ring.middleware.params :refer [wrap-params]]))
+  (:require
+  	[server.db :as db]
+  	[compojure.core :refer :all]
+    [compojure.route :as route]
+    [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+    [ring.middleware.session :refer [wrap-session]]
+	[ring.util.response :refer :all]
+	[ring.middleware.params :refer [wrap-params]]))
 
 (defn- build-response [status body]
 	"Build response with status and body"
@@ -33,10 +35,14 @@
 	(let [name ((:params request) "name") id ((:params request) "id")]
 		{:name name :id id}))
 
+(defn- insert-in-db [{params :params} coll-name]
+	"Insert params from request in the collection specified."
+	(db/insert params coll-name))
+
 (defroutes app-routes
   (GET "/" request (handler request))
   (GET "/check" request (session? request))
-  (POST "/post" request (str (post-params request)))
+  (POST "/post" request (insert-in-db request "test-table"))
   (route/not-found "Not Found"))
 
 (def app
