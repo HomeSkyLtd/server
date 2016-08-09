@@ -25,8 +25,8 @@
 			(build-response
 				200
 				(if (zero? count)
-						(str request "</br><h1>Hello, Stranger!</h1>")
-						(str request "</br><h1>Hello again (" count ")")))
+						"<h1>Hello, Stranger!</h1>"
+						(str "<h1>Hello again (" count ")")))
 			:session {:count (inc count)})))
 
 (defn- handler-db [func & params]
@@ -36,8 +36,8 @@
 (defn- session? [request]
 	"Verify if a request has session number."
 	(if (empty? (:session request))
-		(build-response 403 (str "<h1>FORBIDDEN</h1>" request))
-		(build-response 200 (str "<h3>Session on</h3>" request))))
+		(build-response 403 "<h1>FORBIDDEN</h1>")
+		(build-response 200 "<h3>Session on</h3>")))
 
 (defn- insert-in-db [{params :params} coll-name]
 	"Insert params from request in the collection specified."
