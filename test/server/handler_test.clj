@@ -26,6 +26,22 @@
       (is (= (:status response) 200))
       (is (= (:body response) "<h3>Session on</h3>"))))
 
+  (testing "insertion in db"
+    (let [response (app 
+                      (assoc 
+                        (mock/request :post "/post")
+                        :params {"fname" "John", "lname" "von Neumann", "collection" "testTable"}))]
+      (is (= (:status response) 200))))
+
+  (testing "selecting from db"
+    (let [response (app 
+                      (assoc 
+                        (mock/request :post "/find")
+                        :params {"key" "fname", "value" "John", "collection" "testTable"}))]
+      (is (= (:status response) 200))
+      (is (= (:body response)
+              "{:lname \"von Neumann\", :fname \"John\"}"))))
+
   (testing "not-found route"
     (let [response (app (mock/request :get "/invalid"))]
       (is (= (:status response) 404)))))

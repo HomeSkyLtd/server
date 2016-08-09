@@ -17,10 +17,16 @@
 	([]
 		 (def ^:private db (mg/get-db (mg/connect) "server-db"))))
 
-(defn no-db? []
+(defn- no-db? []
 	"Return true if the db is not initialized yet."
 	(nil? (resolve 'db)))
 
-(defn insert [obj coll-name]
+(defn insert [coll-name obj]
 	"Insert an object (could be a map, a string, etc.) in the collection specified."
+	(if (no-db?) (init-db))
 	(mc/insert db coll-name (assoc obj :_id (ObjectId.))))
+
+(defn select [coll-name key value]
+	"Receive a collection name, a key and a value. Returns a Clojure map with map from DB."
+	(if (no-db?) (init-db))
+	(mc/find-maps db coll-name {key value}))
