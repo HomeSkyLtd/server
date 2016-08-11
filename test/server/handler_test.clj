@@ -19,28 +19,27 @@
       (is (= (:body response) "<h1>Hello, Stranger!</h1>"))))
 
   (testing "check route wth cookie"
-    (let [response (app 
-                      (assoc 
-                        (mock/request :get "/check") 
-                        :headers {"cookie" cookie}))]
+    (let [response (app (assoc (mock/request :get "/check") 
+                                :headers {"cookie" cookie}))]
       (is (= (:status response) 200))
       (is (= (:body response) "<h3>Session on</h3>"))))
 
   (testing "insertion in db"
-    (let [response (app 
-                      (assoc 
-                        (mock/request :post "/post")
-                        :params {"fname" "John", "lname" "von Neumann", "collection" "testTable"}))]
+    (let [response (app (assoc (mock/request :post "/db")
+                                :params {"fname" "John", 
+                                          "lname" "von Neumann", 
+                                          "query" "insert", 
+                                          "collection" "testTable"}))]
       (is (= (:status response) 200))))
 
   (testing "selecting from db"
-    (let [response (app 
-                      (assoc 
-                        (mock/request :post "/find")
-                        :params {"key" "fname", "value" "John", "collection" "testTable"}))]
+    (let [response (app (assoc (mock/request :post "/db")
+                                :params {"key" "fname", 
+                                          "value" "John", 
+                                          "query" "select",
+                                          "collection" "testTable"}))]
       (is (= (:status response) 200))
-      (is (= (:body response)
-              "{:lname \"von Neumann\", :fname \"John\"}"))))
+      (is (= (:body response) "{:lname \"von Neumann\", :fname \"John\"}"))))
 
   (testing "not-found route"
     (let [response (app (mock/request :get "/invalid"))]
