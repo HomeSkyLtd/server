@@ -6,7 +6,9 @@
 		[ring.middleware.defaults :refer [wrap-defaults site-defaults]]
 		[ring.middleware.session :refer [wrap-session]]
 		[ring.util.response :refer :all]
-		[ring.middleware.params :refer [wrap-params]]))
+		[ring.middleware.params :refer [wrap-params]]
+		[org.httpkit.server :as kit]
+		[ring.middleware.reload :as reload]))
 
 (defn- build-response
 	"Build response with status and body"
@@ -44,7 +46,7 @@
 				200
 				(if (zero? count)
 					"<h1>Hello, Stranger!</h1>"
-					(str "<h1>Hello again (" count ")")))
+					(str "<h1>Hello one more time (" count ")")))
 			:session {:count (inc count)})))
 
 (defn- handler-db [{params :params}]
@@ -55,11 +57,13 @@
 
 (defroutes app-routes
 	(GET "/" request (handler request))
-	(GET "/check" request (session? request))
 	(POST "/db" request (handler-db request))
   (route/not-found "Not Found"))
 
-(def app
-	(-> app-routes
-		(wrap-session {:cookie-attrs {:max-age 120}})
-		(wrap-params)))
+(defn -main[& args]
+	(let [port 3000]
+		(println "Running on port" port)
+		(kit/run-server (-> app-routes
+			(reload/wrap-reload)
+			(wrap-session {:cookie-attrs {:max-age 30}})
+			(wrap-params)) {:port port})))
