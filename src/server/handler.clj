@@ -26,7 +26,7 @@
 			(utils/build-response 400 "No function found!")
 			(let [result (utils/call-db-function function params)]
 				(if (seq? result)
-					(utils/build-response 200 (str (dissoc (first result) :_id)))
+					(utils/build-response 200 (apply str (map #(dissoc % :_id) result)))
 					(utils/build-response 200 result))))))
 
 (defroutes app-routes

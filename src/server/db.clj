@@ -24,7 +24,10 @@
 (defn insert [coll-name obj]
 	"Insert an object (could be a map, a string, etc.) in the collection specified."
 	(if (no-db?) (init-db))
-	(mc/insert db coll-name (assoc obj :_id (ObjectId.))))
+	(if (map? obj) 
+		(mc/insert db coll-name (assoc obj :_id (ObjectId.)))
+		(mc/insert-batch db coll-name obj))
+	"Ok")
 
 (defn select [coll-name key value]
 	"Receive a collection name, a key and a value. Returns a Clojure map with map from DB."

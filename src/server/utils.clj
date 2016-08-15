@@ -47,7 +47,7 @@
 
 	"selectData" (fn [params controllerId]
 		"Selects data from node with id = nodeId"
-			(db/select (str "data_" controllerId) "nodeId" (str (params "nodeId"))))
+			(db/select (str "data_" controllerId) "nodeId" (params "nodeId")))
 
 	"selectNode" (fn [params controllerId]
 		"Selects description from node with id = nodeId"
