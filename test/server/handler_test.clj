@@ -46,27 +46,35 @@
   (testing "insert new node in db"
     (let [response (app (assoc (mock/request :post "/")
                                 :params {"description" 
-                                          "{\"id\": \"2\", 
+                                          "{\"id\": 2, 
                                             \"nodeClass\": \"sensor\", 
-                                            \"dataType\": [{\"id\": \"1\",
+                                            \"dataType\": [{\"id\": 1,
                                                           \"type\": \"bool\",
                                                           \"range\": [0, 1],
                                                           \"measureStrategy\": \"event\",
                                                           \"dataCategory\": \"presence\",
-                                                          \"unit\": \"\"}]
-                                            }",
+                                                          \"unit\": \"\"}]}",
                                           "controllerId" 1,
                                           "function" "insert"}))]
       (is (= (:status response) 200))))
 
-  #_ (testing "selecting from db"
-    (let [response (app (assoc (mock/request :post "/db")
-                                :params {"key" "fname", 
-                                          "value" "John", 
-                                          "query" "select",
-                                          "collection" "testTable"}))]
+   (testing "select data from db"
+    (let [response (app (assoc (mock/request :post "/")
+                                :params {"nodeId" 2, 
+                                          "function" "select",
+                                          "target" "data",
+                                          "controllerId" 1}))]
       (is (= (:status response) 200))
-      (is (= (:body response) "{:lname \"von Neumann\", :fname \"John\"}"))))
+      (is (= (:body response) "{:value \"23\", :dataId \"1\", :nodeId \"2\"}"))))
+
+   (testing "select node from db"
+    (let [response (app (assoc (mock/request :post "/")
+                                :params {"nodeId" 2, 
+                                          "function" "select",
+                                          "target" "node",
+                                          "controllerId" 1}))]
+      (is (= (:status response) 200))
+      (is (= (:body response) "{:dataType [{:unit \"\", :dataCategory \"presence\", :measureStrategy \"event\", :range [0 1], :type \"bool\", :id 1}], :nodeClass \"sensor\", :id 2}"))))
 
   (testing "not-found route"
     (let [response (app (mock/request :get "/invalid"))]

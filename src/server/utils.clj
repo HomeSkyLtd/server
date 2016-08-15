@@ -43,28 +43,40 @@
 		"Insert params from request in the Nodes collection (sensor, actuator and controller) of the controller specified."
 		(let [description (params "description")]
 			(if-not (nil? description)
-				(db/insert (str "nodes_" controllerId) (json/read-str description)))))
+				(db/insert (str "node_" controllerId) (json/read-str description)))))
 
-	;"select" (fn [params controllerId]
-	;	"params must have a collection name, a key and a value, which will match in the database collection."
-	;	(let [key (params "key")
-	;		value (params "value")]
-	;		(db/select collection key value)))
-	})
+	"selectData" (fn [params controllerId]
+		"Selects data from node with id = nodeId"
+			(db/select (str "data_" controllerId) "nodeId" (str (params "nodeId"))))
 
-(defn- insert [params]
+	"selectNode" (fn [params controllerId]
+		"Selects description from node with id = nodeId"
+			(db/select (str "node_" controllerId) "id" (params "nodeId")))})
+
+(defn- insert [params controllerId]
 	"Calls specific insert function depending on data from request."
-	(let [controllerId (params "controllerId")]
-		(if-not (nil? controllerId)
-			(if (contains? params "data")
+		(cond 
+			(contains? params "data")
 				((db-functions "insertData") params controllerId)
-				(if (contains? params "xcommand")
-					((db-functions "insertXCommand") params controllerId)
-					(if (contains? params "description")
-						((db-functions "insertNode") params controllerId)
-						"No data, nor external commando, nor node id. Nothing done.")))
-			"No controller id. Nothing done.")))
+
+			(contains? params "xcommand")
+				((db-functions "insertXCommand") params controllerId)
+
+			(contains? params "description")
+				((db-functions "insertNode") params controllerId)
+
+			:else "No data, nor external commando, nor node id. Nothing done."))
+
+(defn- select [params controllerId]
+	(let [target (params "target")]
+		(case target
+			"data" ((db-functions "selectData") params controllerId)
+			"node" ((db-functions "selectNode") params controllerId)
+			"Target not specified: data or node")))
 
 (defn call-db-function [function params]
-	(if (= function "insert") 
-		(if-let [result (insert params)] result "Ok")))
+	(if-let [controllerId (params "controllerId")]
+		(case function
+			"insert" (if-let [result (insert params controllerId)] result "Ok")
+			"select" (select params controllerId))
+		"No controller id. Nothing done."))
