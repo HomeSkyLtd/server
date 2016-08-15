@@ -7,8 +7,7 @@
 		[ring.util.response :refer :all]
 		[ring.middleware.params :refer [wrap-params]]
 		[org.httpkit.server :as kit]
-		[ring.middleware.reload :as reload]
-		[clojure.data.json :as json]))
+		[ring.middleware.reload :as reload]))
 
 (defn- handler-login [request]
 	(let [count ((request :session {}) :count 0)]
@@ -21,16 +20,14 @@
 			:session {:count (inc count)})))
 
 (defn- handler [{params :params}]
-	"Params must have the following keys: method, collection, and any key for data."
-	(let [data (json/read-str (params "data"))
-			method (data "method")
-			values (dissoc data "method")]
-		(if (or (nil? method) (nil? (values "collection")))
-			(utils/build-response 400 "No method found!")
-			(let [func (utils/db-functions method) result (func values)]
+	"Params must have the following keys: function, collection, and any key for data."
+	(let [function (params "function")]
+		(if (nil? function)
+			(utils/build-response 400 "No function found!")
+			(let [result (utils/call-db-function function params)]
 				(if (seq? result)
 					(utils/build-response 200 (str (dissoc (first result) :_id)))
-					(utils/build-response 200 "Ok"))))))
+					(utils/build-response 200 result))))))
 
 (defroutes app-routes
 	(GET "/" [] (utils/build-response 200 "Server running"))
