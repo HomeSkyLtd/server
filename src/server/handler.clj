@@ -90,7 +90,7 @@
 	([response-map status message]
 		(json/write-str (merge {:status status, :errorMessage message} response-map)))
 	([status message] (build-response-json {} status message))
-	([response-map] (build-response-json response-map 0 ""))
+	([response-map] (build-response-json response-map 500 ""))
 )
 
 (defn- handler [{params :params}]
