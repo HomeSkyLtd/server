@@ -1,4 +1,13 @@
 (ns server.modules.node.node-test
-  (:require [clojure.test :refer :all]))
+  (:use [clojure.test])
+  (:use [server.modules.node.node])
+  (:require [server.db :as db])
+  )
 
-(println "test")
+;
+; Check if all function exists
+;
+
+(deftest test-new-detected-nodes 
+     (println (new-detected-nodes {:node {"nodeId" 1 "nodeClass" 1}} 0)))
+
