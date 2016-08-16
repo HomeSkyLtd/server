@@ -7,3 +7,4 @@
     "Function to save new detected nodes and notify users"
     [obj house-id]
     (db/insert (str "node_" house-id) (:node obj)))
+
