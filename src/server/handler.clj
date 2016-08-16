@@ -51,11 +51,13 @@
 	"test" test-handler
 	})
 
+; Granting base permission to a function means anyone can access it
 (def permissions
 	{
-		"user" 1,
-		"controller" 2,
-		"admin" 4
+		"base" 1,
+		"user" 2,
+		"controller" 4,
+		"admin" 8
 	})
 
 (def ^:private function-permissions {
@@ -82,9 +84,13 @@
 	})
 
 (defn- build-response-json
+	"Build JSON response. If response-map is not specified, only status and error message
+	are included in the response. If status or error message are included in response-map,
+	those values will be used when constructing the response."
 	([response-map status message]
-		(json/write-str (merge response-map {:status status, :errorMessage message})))
+		(json/write-str (merge {:status status, :errorMessage message} response-map)))
 	([status message] (build-response-json {} status message))
+	([response-map] (build-response-json response-map 0 ""))
 )
 
 (defn- handler [{params :params}]
@@ -93,22 +99,22 @@
 			params_map (json/read-str (params "payload") :key-fn keyword)
 			function (params_map :function)
 			obj (dissoc params_map :function)
-			permission (permissions "controller") ;FIXME get this from session
+			permission (bit-or (permissions "base") (permissions "controller")) ;FIXME get this from session
 		]
 
 		(if (or (nil? function) (nil? (function-handlers function)))
 			(build-response-json 400 "No function found!")
 			(cond
-				;If user not logged
-				(nil? permission)
-					(build-response-json 403 "User not logged in")
-				;If user logged, but triggering an unauthorized operation
+				;If not authorized due to mismatched authorization
 				(zero? (bit-and permission (function-permissions function)))
-					(build-response-json 403 "Unauthorized operation")
+					(if (= (permissions "base") permission)
+						(build-response-json 403 "User not logged in")
+						(build-response-json 403 "Unauthorized operation")
+					)
 				;If everything OK
 				:else
 					(let [result ((function-handlers function) obj)]
-						(build-response-json result 200 "")
+						(build-response-json result)
 					)
 			)
 		)
