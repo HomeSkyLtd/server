@@ -8,11 +8,11 @@
 
 (defn build-response
 	"Build response with status and body"
-	([status body] 
+	([status body]
 		{:status status
 			:headers {"Content-Type" "text/html"}
 			:body body})
-	([status] 
+	([status]
 		{:status status
 			:headers {"Content-Type" "text/html"}}))
 
@@ -39,7 +39,7 @@
 			(if-not (nil? xcommand)
 				(db/insert (str "data_" controllerId) (json/read-str xcommand))))),
 
-	"insertNode" (fn [params controllerId] 
+	"insertNode" (fn [params controllerId]
 		"Insert params from request in the Nodes collection (sensor, actuator and controller) of the controller specified."
 		(let [description (params "description")]
 			(if-not (nil? description)
@@ -53,9 +53,10 @@
 		"Selects description from node with id = nodeId"
 			(db/select (str "node_" controllerId) "id" (Integer. (params "nodeId"))))})
 
+
 (defn- insert [params controllerId]
 	"Calls specific insert function depending on data from request."
-		(cond 
+		(cond
 			(contains? params "data")
 				((db-functions "insertData") params controllerId)
 
