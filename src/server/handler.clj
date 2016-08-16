@@ -8,6 +8,7 @@
 		[ring.middleware.params :refer [wrap-params]]
 		[org.httpkit.server :as kit]
 		[ring.middleware.reload :as reload]
+		[clojure.walk :as walk]
 		[clojure.data.json :as json]
 		[server.modules.auth.auth :as auth]
 		[server.modules.node.node :as node]
@@ -50,16 +51,65 @@
 	"test" test-handler
 	})
 
+(def permissions
+	{
+		"user" 1,
+		"controller" 2,
+		"admin" 4
+	})
+
+(def ^:private function-permissions {
+	; "newData" state/new-data,
+	; "newCommand" state/new-command,
+	; "newAction" state/new-action,
+	; "getHouseState" state/get-house-state,
+	;
+	; "newRules" rule/new-rules,
+	; "getRules" rule/get-rules,
+	; "getLearntRules" rule/get-learnt-rules,
+	;
+	; "newDetectedNode" node/new-detected-node,
+	; "setNodeExtra" node/set-node-extra,
+	; "getNodes" node/get-nodes,
+	; "acceptNode" node/accept-node,
+	; "setNodeState" node/set-node-state,
+	;
+	; "login" auth/login,
+	; "logout" auth/logout,
+	; "newUser" auth/new-user,
+
+	"test" (bit-or (permissions "user") (permissions "admin"))
+	})
+
+(defn- build-response-json
+	([response-map status message]
+		(json/write-str (merge response-map {:status status, :errorMessage message})))
+	([status message] (build-response-json {} status message))
+)
+
 (defn- handler [{params :params}]
 	(let
 		[
-			function (params "function")
-			obj (dissoc params "function")
+			params_map (json/read-str (params "payload") :key-fn keyword)
+			function (params_map :function)
+			obj (dissoc params_map :function)
+			permission (permissions "controller") ;FIXME get this from session
 		]
+
 		(if (or (nil? function) (nil? (function-handlers function)))
-			(utils/build-response 400 "No function found!")
-			(let [result ((function-handlers function) obj)]
-				(json/write-str result)
+			(build-response-json 400 "No function found!")
+			(cond
+				;If user not logged
+				(nil? permission)
+					(build-response-json 403 "User not logged in")
+				;If user logged, but triggering an unauthorized operation
+				(zero? (bit-and permission (function-permissions function)))
+					(build-response-json 403 "Unauthorized operation")
+				;If everything OK
+				:else
+					(let [result ((function-handlers function) obj)]
+						(build-response-json result 200 "")
+					)
 			)
 		)
 	)
