@@ -47,11 +47,11 @@
 
 	"selectData" (fn [params controllerId]
 		"Selects data from node with id = nodeId"
-			(db/select (str "data_" controllerId) "nodeId" (params "nodeId")))
+			(db/select (str "data_" controllerId) "nodeId" (Integer. (params "nodeId"))))
 
 	"selectNode" (fn [params controllerId]
 		"Selects description from node with id = nodeId"
-			(db/select (str "node_" controllerId) "id" (params "nodeId")))})
+			(db/select (str "node_" controllerId) "id" (Integer. (params "nodeId"))))})
 
 (defn- insert [params controllerId]
 	"Calls specific insert function depending on data from request."
