@@ -12,7 +12,7 @@
 (. (. Logger getLogger "org.mongodb.driver") setLevel (. Level SEVERE))
 
 
-(defn init-db
+(defn- init-db
 	"Create Database by host and port. All parameters are optional."
 	([host port db-name]
 		(mg/get-db (mg/connect {:host host :port port}) db-name))
