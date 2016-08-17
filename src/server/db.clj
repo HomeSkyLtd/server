@@ -1,6 +1,6 @@
 (ns server.db
     (:require 
-		(monger [core :as mg] [collection :as mc] [result :as res]))
+		(monger [core :as mg] [collection :as mc] [result :as res] [operators :as op]))
 	(:import 
 		[com.mongodb MongoOptions ServerAddress DB WriteConcern]
 		[org.bson.types ObjectId]
@@ -42,6 +42,19 @@
     "Same as insert, but returns true if insert was ok and false otherwise"
     (res/acknowledged? (insert coll-name obj)))
 
-(defn select [coll-name key value]
+
+(defn update [coll-name conditions &{:keys [set] :or {set {}}}]
+    "Updates documents"
+    (mc/update db coll-name conditions {op/$set set}))
+
+(defn remove [coll-name conditions]
+    "Remove documents"
+    (mc/remove db coll-name conditions))
+
+(defn select 
 	"Receive a collection name, a key and a value. Returns a Clojure map with map from DB."
-	(mc/find-maps db coll-name {key value}))
+	([coll-name key value]
+        (mc/find-maps db coll-name {key value}))
+    ([coll-name query]
+        (mc/find-maps db coll-name query)))
+
