@@ -1,4 +1,4 @@
-(defproject server "0.1.1"
+(defproject server "1.0.0"
   :description "Server running machine learning algorithms."
   :url "https://github.com/HomeSkyLtd/server"
   :min-lein-version "2.0.0"
