@@ -1,7 +1,6 @@
 (ns server.db
 	(:require 
-		[monger.core :as mg]
-		[monger.collection :as mc])
+		(monger [core :as mg] [collection :as mc] [result :as res]))
 	(:import 
 		[com.mongodb MongoOptions ServerAddress DB WriteConcern]
 		[org.bson.types ObjectId]
@@ -34,6 +33,10 @@
 		(mc/insert db coll-name (assoc obj :_id (ObjectId.)))
 		(mc/insert-batch db coll-name obj))
 	)
+
+(defn insert? [coll-name obj]
+    "Same as insert, but returns true if insert was ok and false otherwise"
+    (res/acknowledged? (insert coll-name obj)))
 
 (defn select [coll-name key value]
 	"Receive a collection name, a key and a value. Returns a Clojure map with map from DB."
