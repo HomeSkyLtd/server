@@ -42,6 +42,7 @@
     "Same as insert, but returns true if insert was ok and false otherwise"
     (res/acknowledged? (insert coll-name obj)))
 
-(defn select [coll-name key value]
-	"Receive a collection name, a key and a value. Returns a Clojure map with map from DB."
-	(mc/find-maps db coll-name {key value}))
+(defn select [coll-name map-key-value]
+	"Receive a collection name and a map. This map has the values to use as filter.
+	Returns a Clojure map with map from DB."
+	(mc/find-maps db coll-name map-key-value))
