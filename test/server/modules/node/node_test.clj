@@ -10,8 +10,8 @@
 
 (deftest test-new-detected-nodes 
     (println (new-detected-nodes 
-        {:node [
-           {:nodeId 0 :nodeClass 2 
+        {:node [ 
+           {:nodeId 123 :nodeClass 2 
             :dataType 
                 [{
                     :dataId 5 
@@ -22,5 +22,12 @@
                     :dataCategory 1
                 }] 
             }
-        ] } 0 0)))
+        ]} 0 0))
+
+    (println (accept-node
+       {:nodeId 123 :controllerId 0 :accept 0} 0 0))
+
+    )
+
+
 
