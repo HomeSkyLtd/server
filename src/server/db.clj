@@ -1,8 +1,7 @@
 (ns server.db
-	(:require
-		[monger.core :as mg]
-		[monger.collection :as mc])
-	(:import
+    (:require 
+		(monger [core :as mg] [collection :as mc] [result :as res]))
+	(:import 
 		[com.mongodb MongoOptions ServerAddress DB WriteConcern]
 		[org.bson.types ObjectId]
         [java.util.logging Logger Level]))
@@ -39,6 +38,11 @@
 	)
 )
 
-(defn select [coll-name key value]
-	"Receive a collection name, a key and a value. Returns a Clojure map with map from DB."
-	(mc/find-maps db coll-name {key value}))
+(defn insert? [coll-name obj]
+    "Same as insert, but returns true if insert was ok and false otherwise"
+    (res/acknowledged? (insert coll-name obj)))
+
+(defn select [coll-name map-key-value]
+	"Receive a collection name and a map. This map has the values to use as filter.
+	Returns a Clojure map with map from DB."
+	(mc/find-maps db coll-name map-key-value))

@@ -6,7 +6,7 @@
   (testing "new node ok"
     (let [obj {:rules [{:nodeId 1 :commandId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
           houseId 1]
-      (is (= (first (rule/new-rules obj houseId)) {:status 200}))))
+      (is (= (rule/new-rules obj houseId) {:status 200}))))
 
   (testing "new node without rules"
     (let [obj nil houseId 1]

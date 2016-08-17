@@ -9,5 +9,18 @@
 ;
 
 (deftest test-new-detected-nodes 
-    (println (new-detected-nodes {:node {"nodeId" 1 "nodeClass" 1}} 0)))
+    (println (new-detected-nodes 
+        {:node [
+           {:nodeId 0 :nodeClass 2 
+            :dataType 
+                [{
+                    :dataId 5 
+                    :measureStrategy 1
+                    :type 1
+                    :range [0 50]
+                    :unit "C"
+                    :dataCategory 1
+                }] 
+            }
+        ] } 0 0)))
 
