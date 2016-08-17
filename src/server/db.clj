@@ -1,5 +1,5 @@
 (ns server.db
-	(:require 
+    (:require 
 		(monger [core :as mg] [collection :as mc] [result :as res]))
 	(:import 
 		[com.mongodb MongoOptions ServerAddress DB WriteConcern]
@@ -27,12 +27,16 @@
 (def db (init-db))
 
 
-(defn insert [coll-name obj]
+(defn insert [coll-name obj &{:keys [return-inserted] :or {return-inserted false}}]
 	"Insert an object (could be a map, a string, etc.) in the collection specified."
-	(if (map? obj) 
-		(mc/insert db coll-name (assoc obj :_id (ObjectId.)))
-		(mc/insert-batch db coll-name obj))
+	(if (map? obj)
+		(if return-inserted
+			(mc/insert-and-return db coll-name (assoc obj :_id (ObjectId.)))
+			(mc/insert db coll-name (assoc obj :_id (ObjectId.)))
+		)
+		(mc/insert-batch db coll-name obj)
 	)
+)
 
 (defn insert? [coll-name obj]
     "Same as insert, but returns true if insert was ok and false otherwise"
