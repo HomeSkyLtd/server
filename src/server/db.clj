@@ -4,7 +4,8 @@
 	(:import 
 		[com.mongodb MongoOptions ServerAddress DB WriteConcern]
 		[org.bson.types ObjectId]
-        [java.util.logging Logger Level]))
+        [java.util.logging Logger Level])
+    (:refer-clojure :exclude [update remove]))
 
 
 ; Hide MongoDB annoying logs
@@ -43,7 +44,7 @@
     (res/acknowledged? (insert coll-name obj)))
 
 
-(defn update [coll-name conditions &{:keys [set] :or {set {}}}]
+(defn server.db/update [coll-name conditions &{:keys [set] :or {set {}}}]
     "Updates documents"
     (mc/update db coll-name conditions {op/$set set}))
 
@@ -51,10 +52,9 @@
     "Remove documents"
     (mc/remove db coll-name conditions))
 
-(defn select 
-	"Receive a collection name, a key and a value. Returns a Clojure map with map from DB."
-	([coll-name key value]
-        (mc/find-maps db coll-name {key value}))
-    ([coll-name query]
-        (mc/find-maps db coll-name query)))
+
+(defn select [coll-name map-key-value]
+	"Receive a collection name and a map. This map has the values to use as filter.
+	Returns a Clojure map with map from DB."
+	(mc/find-maps db coll-name map-key-value))
 
