@@ -9,5 +9,5 @@
 ;
 
 (deftest test-new-detected-nodes 
-     (println (new-detected-nodes {:node {"nodeId" 1 "nodeClass" 1}} 0)))
+    (println (new-detected-nodes {:node {"nodeId" 1 "nodeClass" 1}} 0)))
 
