@@ -8,9 +8,6 @@
 ; Check if all function exists
 ;
 
-
-
-
 ;
 ; Clear database
 ;
@@ -122,17 +119,39 @@
 
 
 (deftest test-set-node-extra
-    (testing "set node name existing" 
+    (testing "set extra of existing node" 
         (is (= (:status (set-node-extra
             {:nodeId 123 :controllerId 0 :extra {:name "Presence sensor" :t "1231"}} 0 5)
         ) 200))
         (is (= (:status (set-node-extra
             {:nodeId 123 :controllerId 0 :extra {:name "Test" :room "Living room"}} 0 5)
         ) 200)))
+    (testing "set extra of non existing node" 
+        (is (= (:status (set-node-extra
+            {:nodeId 125 :controllerId 0 :extra {:name "Presence sensor" :t "1231"}} 0 5)
+        ) 400))))
 
-   
-)
+
+(deftest test-get-nodes-info
+    (testing "get nodes info"
+        (let [response (get-nodes-info 0 0 0)]
+            (and (is (= (:status response) 200))
+                (is (not (empty? (:nodes response))))))))
 
 
-
+(deftest test-set-node-state
+    (testing "set state of existing node" 
+        (is (= (:status (set-node-state
+            {:nodeId 123 :alive 0 } 0 0)
+        ) 200))
+        (is (= (:alive (first (:nodes (get-nodes-info 0 0 0)))) 0))
+        (is (= (:status (set-node-state
+            {:nodeId 123 :alive 1 } 0 0)
+        ) 200))
+        (is (= (:alive (first (:nodes (get-nodes-info 0 0 0)))) 1)))
+    
+    (testing "set state of non existing node" 
+        (is (= (:status (set-node-state
+            {:nodeId 129 :alive 0 } 0 0)
+        ) 400))))
 
