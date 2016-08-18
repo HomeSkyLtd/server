@@ -54,21 +54,22 @@
 		"admin" 8
 	})
 
+;FIXME uncomment when implemented
 (def ^:private function-permissions {
-	; "newData" state/new-data,
-	; "newCommand" state/new-command,
-	; "newAction" state/new-action,
-	; "getHouseState" state/get-house-state,
+	; "newData" (permissions "controller"),
+	; "newCommand" (permissions "controller"),
+	; "newAction" (permissions "user"),
+	; "getHouseState" (permissions "user"),
 	;
-	; "newRules" rule/new-rules,
-	; "getRules" rule/get-rules,
-	; "getLearntRules" rule/get-learnt-rules,
+	; "newRules" (permissions "user"),
+	; "getRules" (permissions "user"),
+	; "getLearntRules" (permissions "user"),
 	;
-	; "newDetectedNode" node/new-detected-node,
-	; "setNodeExtra" node/set-node-extra,
-	; "getNodes" node/get-nodes,
-	; "acceptNode" node/accept-node,
-	; "setNodeState" node/set-node-state,
+	; "newDetectedNode" (permissions "controller"),
+	; "setNodeExtra" (permissions "user"),
+	; "getNodes" (permissions "user"),
+	; "acceptNode" (permissions "user"),
+	; "setNodeState" (permissions "controller"),
 	;
 	"login" (permissions "base"),
 	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
@@ -135,7 +136,6 @@
 (defroutes app-routes
 	(GET "/" [] (utils/build-response 200 "Server running"))
 	(POST "/" request (handler request))
-	;(POST "/" request (fn [request] (println request) (handler request)))
   	(route/not-found "Not Found"))
 
 (def app
