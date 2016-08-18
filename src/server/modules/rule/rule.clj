@@ -16,7 +16,7 @@
 						{:status 200}
 						{:status 500 :errorMessage "DB did not insert values."})
 					{:status 400 :errorMessage "Define nodeId, commandId, value and clauses."})
-			{:status 400 :errorMessage "Rules not defined"})))
+			{:status 400 :errorMessage "Rules not defined"}))))
 
 (defn get-rules [obj houseId]
 	)
