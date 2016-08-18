@@ -15,20 +15,20 @@
 )
 
 (defn new-admin [obj _]
-    (let [new-house (db/insert "house" {} :return-inserted true)]
-        (if (valid-username-password? obj)
+    (if (valid-username-password? obj)
+        (let [new-house (db/insert "house" {} :return-inserted true)]
             (do
                 (db/insert "agent" (assoc obj :type "admin" :houseId (str (:_id new-house))))
                 {:status 200}
             )
-            {:status 400, :errorMessage "username and password cannot be empty"}
         )
+        {:status 400, :errorMessage "username and password cannot be empty"}
     )
 )
 
 (defn login [obj _]
     (if (valid-username-password? obj)
-        (let [agent (first (db/select "agent" "username" (:username obj)))]
+        (let [agent (first (db/select "agent" {"username" (:username obj)}))]
             (if (= (:password obj) (:password agent))
     			{:status 200, :session
                     {
