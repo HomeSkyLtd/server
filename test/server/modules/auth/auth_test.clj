@@ -283,4 +283,18 @@
             (check-body-ok response-body)
         )
     )
+    (testing "trying to log in without logging out first"
+        (let [
+                response (handler/app (assoc (mock/request :post "/")
+                    :params {"payload" (json/write-str {
+                        "function" "login",
+                        "username" "admin1",
+                        "password" "mypass"})}))
+                response-body (json/read-str (:body response) :key-fn keyword)
+                set-cookie-value (first ((:headers response) "Set-Cookie"))
+            ]
+            (is (nil? set-cookie-value))
+            (check-body-error response-body 400)
+        )
+    )
 )

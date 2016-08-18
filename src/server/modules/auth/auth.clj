@@ -31,26 +31,31 @@
     )
 )
 
-(defn login [obj _ _]
-    (if (valid-username-password? obj)
-        (let [agent (db/select "agent" {"username" (:username obj)})]
-            (cond
-                (nil? agent)
-                    {:status 500 :errorMessage "could not retrieve agent data"}
-                (empty? agent)
-                    {:status 400, :errorMessage "invalid username/password"}
-                :else
-                    (if (= (:password obj) (:password (first agent)))
-            			{:status 200, :session
-                            {
-                                :houseId (:houseId (first agent)),
-                                :userId (str (:_id (first agent)))
-                                :permission (:type (first agent))
+(defn login [obj house-id _]
+    (if (nil? house-id)
+        (if (valid-username-password? obj)
+            (let [agent (db/select "agent" {"username" (:username obj)})]
+                (cond
+                    (nil? agent)
+                        {:status 500 :errorMessage "could not retrieve agent data"}
+                    (empty? agent)
+                        {:status 400, :errorMessage "invalid username/password"}
+                    :else
+                        (if (= (:password obj) (:password (first agent)))
+                            {:status 200, :session
+                                {
+                                    :houseId (:houseId (first agent)),
+                                    :userId (str (:_id (first agent)))
+                                    :permission (:type (first agent))
+                                }
                             }
-                        }
-                    )
+                        )
+                )
             )
         )
+        {:status 400 :errorMessage "already logged in, log out first"}
+    )
+
         {:status 400 :errorMessage "username/password cannot be blank"}
     )
 )
