@@ -44,7 +44,8 @@
     (res/acknowledged? (insert coll-name obj)))
 
 
-(defn server.db/update [coll-name conditions &{:keys [set add-to-set multi] :or {set {} add-to-set {} multi true}}]
+(defn server.db/update [coll-name conditions 
+    &{:keys [set add-to-set multi] :or {set {} add-to-set {} multi true}}]
     "Updates documents"
     (let [args-map {op/$set set op/$addToSet add-to-set}]
         (mc/update db coll-name conditions (into {} (filter #(not (empty? (get % 1))) args-map)) {:multi multi})))
