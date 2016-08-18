@@ -4,7 +4,12 @@
               [validateur.validation :refer :all])
     )
 
+;
+; INTERNAL FUNCTIONS
+;
+
 (defn- validate-nodes
+    "Take a list of nodes and check if there is a nodeId in all of them"
     [nodes]
     
     (let [valid-node (validation-set
@@ -12,12 +17,19 @@
         (reduce #(conj % (valid-node %2)) {} nodes))) 
 
 (defn- node-exists?
+    "Check if a node exists"
     [house-id controller-id node-id]
     (= 1 (count (db/select (str "node_" house-id) {:controllerId controller-id :nodeId node-id}))))
 
 (defn- get-node
+    "Returns the node (or nil)"
     [house-id controller-id node-id]
     (db/select (str "node_" house-id) {:controllerId controller-id :nodeId node-id} :one true))
+
+(defn- get-nodes
+    "Returns a list of nodes"
+    [house-id]
+    (db/select (str "node_" house-id) { } :one false))
 
 (defn- error-message
     "Transforms an error-map into a string of the error"
@@ -25,15 +37,17 @@
         (str (first (first (vals (last error-map)))) ": " (subs (str (first (keys (last error-map)))) 1))
     )
 
+
+
 (defn new-detected-nodes 
     "Function to save new detected nodes and notify users"
     [obj house-id controller-id]
     (let [valid ((validate-some 
-                (all-keys-in #{:node} :unknown-message "Invalid key")
-                (presence-of :node :message "Missing field")
-                (validate-by :node sequential? :message "Field is not a list")
-                (validate-by :node #(not (empty? %)) :message "Field is empty")
-                ) obj)]
+            (all-keys-in #{:node} :unknown-message "Invalid key")
+            (presence-of :node :message "Missing field")
+            (validate-by :node sequential? :message "Field is not a list")
+            (validate-by :node #(not (empty? %)) :message "Field is empty")
+            ) obj)]
         ;Check if obj is valid
         (if (first valid) 
             (let [nodes (:node obj) valid-nodes (validate-nodes (:node obj))]
@@ -42,7 +56,7 @@
                     ;Check if node already exists
                     (if (not-any? #(node-exists? house-id controller-id (:nodeId %)) nodes)
                         (if (db/insert? (str "node_" house-id) 
-                        (map #(assoc % :controllerId controller-id :accept 0) nodes))
+                        (map #(assoc % :controllerId controller-id :accepted 0 :alive 1) nodes))
                             ; TODO: Notify users of detected nodes
                             {:status 200}
                             ; Return error
@@ -59,7 +73,7 @@
 
 (defn set-node-extra
     "Set extra info of node (like name, room etc)"
-    [obj house-id user-id]
+    [obj house-id _]
     (let [valid ((validate-some 
                 (all-keys-in #{:nodeId :controllerId :extra} :unknown-message "Invalid key")
                 (presence-of #{:nodeId :controllerId :extra} :message "Missing field")
@@ -79,8 +93,11 @@
 
 (defn get-nodes-info
     "Get nodes info"
-    [obj house-id user-id]
-    {:status 501})
+    [_ house-id _]
+    (let [nodes (get-nodes house-id)] 
+        (if (nil? nodes)
+            {:status 500 :errorMessage "Unexpected nil value"}
+            {:status 200 :nodes (map #(dissoc % :_id) nodes)})))
 
 
 (defn accept-node
@@ -94,10 +111,11 @@
             (let [node (get-node house-id (:controllerId obj) (:nodeId obj))]
                 (if (nil? node)
                     {:status 400 :errorMessage "Tried to accept non existent node"}
-                    (if (= (:accept node) 0)
+                    (if (= (:accepted node) 0)
                         (if (res/acknowledged? (if (= (:accept obj) 1)
-                                (db/update (str "node_" house-id) (select-keys obj [:controllerId :nodeId]) :set {:accept 1})
+                                (db/update (str "node_" house-id) (select-keys obj [:controllerId :nodeId]) :set {:accepted 1})
                                 (db/remove (str "node_" house-id) (select-keys obj [:controllerId :nodeId]))))
+                            ;Notify controller
                             {:status 200 }
                             {:status 500 :errorMessage "Database error: Couldn't accept node" })
                         {:status 400 :errorMessage "Tried to accept accepted node" })))
@@ -107,4 +125,17 @@
 (defn set-node-state
     "Set node state (as dead or alive)"
     [obj house-id controller-id]
-    {:status 501})
+    (let [valid ((validate-some 
+                (all-keys-in #{:nodeId :alive} :unknown-message "Invalid key")
+                (presence-of #{:nodeId :alive} :message "Missing field")
+                ) obj)]
+        (if (first valid)
+            (let [node (get-node house-id controller-id (:nodeId obj))]
+                (if (nil? node)
+                    {:status 400 :errorMessage "Tried to change state of non existent node"}
+                    (if (res/acknowledged?
+                        (db/update (str "node_" house-id) 
+                            (select-keys obj [:controllerId :nodeId]) :set {:alive (:alive obj)}))
+                        {:status 200 }
+                        {:status 500 :errorMessage "Database error: Couldn't set node state" })))
+            {:status 400 :errorMessage (error-message valid)})))
