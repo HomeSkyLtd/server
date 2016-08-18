@@ -44,17 +44,23 @@
     (res/acknowledged? (insert coll-name obj)))
 
 
-(defn server.db/update [coll-name conditions &{:keys [set] :or {set {}}}]
+(defn server.db/update [coll-name conditions &{:keys [set add-to-set multi] :or {set {} add-to-set {} multi true}}]
     "Updates documents"
-    (mc/update db coll-name conditions {op/$set set}))
+    (let [args-map {op/$set set op/$addToSet add-to-set}]
+        (mc/update db coll-name conditions (into {} (filter #(not (empty? (get % 1))) args-map)) {:multi multi})))
 
-(defn remove [coll-name conditions]
+(defn remove 
     "Remove documents"
-    (mc/remove db coll-name conditions))
+    ([coll-name conditions]
+        (mc/remove db coll-name conditions))
+    ([coll-name]
+        (mc/remove db coll-name)))
 
 
-(defn select [coll-name map-key-value]
+(defn select [coll-name map-key-value &{:keys [one] :or {one false}}]
 	"Receive a collection name and a map. This map has the values to use as filter.
 	Returns a Clojure map with map from DB."
-	(mc/find-maps db coll-name map-key-value))
+    (if one
+        (mc/find-one-as-map db coll-name map-key-value)
+	    (mc/find-maps db coll-name map-key-value)))
 
