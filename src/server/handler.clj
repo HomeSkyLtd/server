@@ -15,16 +15,6 @@
 		[server.modules.state.state :as state]
 		[server.modules.rule.rule :as rule]))
 
-(defn- handler-login [request]
-	(let [count ((request :session {}) :count 0)]
-		(assoc
-			(utils/build-response
-				200
-				(if (zero? count)
-					"<h1>Hello, Stranger!</h1>"
-					(str "<h1>Hello again (" count ")")))
-			:session {:count (inc count)})))
-
 (defn test-handler [obj] obj)
 
 ;FIXME uncomment when implemented
@@ -44,9 +34,10 @@
 	; "acceptNode" node/accept-node,
 	; "setNodeState" node/set-node-state,
 	;
-	; "login" auth/login,
+	"login" auth/login,
 	; "logout" auth/logout,
 	; "newUser" auth/new-user,
+	"newAdmin" auth/new-admin,
 
 	"test" test-handler
 	})
@@ -76,9 +67,10 @@
 	; "acceptNode" node/accept-node,
 	; "setNodeState" node/set-node-state,
 	;
-	; "login" auth/login,
+	"login" (permissions "base"),
 	; "logout" auth/logout,
 	; "newUser" auth/new-user,
+	"newAdmin" (permissions "base"),
 
 	"test" (bit-or (permissions "user") (permissions "admin"))
 	})
@@ -113,8 +105,12 @@
 					)
 				;If everything OK
 				:else
-					(let [result ((function-handlers function) obj)]
-						(build-response-json result)
+					(let [	result ((function-handlers function) obj nil)
+							session (:session result)]
+						(if (nil? session)
+							(build-response-json result)
+							{:status 200 :body (build-response-json (dissoc result :session)) :session session}
+						)
 					)
 			)
 		)

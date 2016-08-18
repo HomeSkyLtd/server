@@ -1,8 +1,14 @@
 (ns server.modules.rule.rule-test
   (:require [clojure.test :refer :all]
-            [server.modules.rule.rule :as rule]))
+            [server.modules.rule.rule :as rule]
+            [server.db :as db]
+            (monger [db :as md] [collection :as mc])))
 
 (deftest test-app
+
+  (md/drop-db db/db)
+  (mc/insert db/db "rules_1" {:accepted false :nodeId 2 :commandId 1 :value 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]})
+
   (testing "new node ok"
     (let [obj {:rules [
                   {:nodeId 1 
@@ -30,7 +36,7 @@
                 {:status 400 :errorMessage "Define nodeId, commandId, value and clauses."}))))
 
   (testing "select from db"
-    (let [houseId 1 obj {:accepted false
+    (let [houseId 1 obj {:accepted true
                           :nodeId 1
                           :commandId 1 
                           :value 20
