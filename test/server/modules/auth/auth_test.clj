@@ -78,7 +78,7 @@
             (check-body-error response-body 400)
         )
     )
-    (testing "logging in"
+    (testing "logging in as admin"
         (let [
                 response (handler/app (assoc (mock/request :post "/")
                     :params {"payload" (json/write-str {
@@ -96,7 +96,7 @@
             )
         )
     )
-    (testing "triggering function with proper permissions"
+    (testing "triggering admin function with proper permissions"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
             :params {"payload" (json/write-str {"function" "testAdmin"})}
             :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
@@ -126,6 +126,25 @@
             (is (= house-id (:houseId inserted-user)))
         )
     )
+    (testing "associating new controller"
+        (db/insert "agent" {:username "controller1", :password "ctrlpass",
+            :type "controller", :controllerId 1, :houseId ""})
+        (let [
+                response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+                    :params {"payload" (json/write-str
+                        {
+                            "function" "registerController",
+                            "controllerId" 1
+                        })}
+                    :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+                    ))) :key-fn keyword)
+                updated-controller (db/select "agent" {"controllerId" 1})
+                admin (db/select "agent" {"username" "admin1"})
+            ]
+            (check-body-ok response-body)
+            (is (= (:house-id admin) (:house-id updated-controller)))
+        )
+    )
     (testing "logging out"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
             :params {"payload" (json/write-str {"function" "logout"})}
@@ -140,6 +159,32 @@
             :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
             ))) :key-fn keyword)]
             (check-body-error response-body 403)
+        )
+    )
+    (testing "logging in as user"
+        (let [
+                response (handler/app (assoc (mock/request :post "/")
+                    :params {"payload" (json/write-str {
+                        "function" "login",
+                        "username" "user1",
+                        "password" "userpass"})}))
+                response-body (json/read-str (:body response) :key-fn keyword)
+                set-cookie-value (first ((:headers response) "Set-Cookie"))
+            ]
+            (is (not (nil? set-cookie-value)))
+            (let [cookie (first (process-header set-cookie-value))]
+                (is (= (first cookie) "ring-session"))
+                (def user-cookie cookie)
+                (check-body-ok response-body)
+            )
+        )
+    )
+    (testing "triggering user function with proper permissions"
+        (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+            :params {"payload" (json/write-str {"function" "testUser"})}
+            :headers {"cookie" (str (first user-cookie) "=" (second user-cookie))}
+            ))) :key-fn keyword)]
+            (check-body-ok response-body)
         )
     )
 )

@@ -1,7 +1,7 @@
 (ns server.db
-    (:require 
+    (:require
 		(monger [core :as mg] [collection :as mc] [result :as res] [operators :as op]))
-	(:import 
+	(:import
 		[com.mongodb MongoOptions ServerAddress DB WriteConcern]
 		[org.bson.types ObjectId]
         [java.util.logging Logger Level])
@@ -39,9 +39,9 @@
 	)
 )
 
-(defn insert? [coll-name obj]
+(defn insert? [coll-name obj &{:keys [return-inserted] :or {return-inserted false}}]
     "Same as insert, but returns true if insert was ok and false otherwise"
-    (res/acknowledged? (insert coll-name obj)))
+    (res/acknowledged? (insert coll-name obj :return-inserted return-inserted)))
 
 
 (defn server.db/update [coll-name conditions &{:keys [set add-to-set multi] :or {set {} add-to-set {} multi true}}]
@@ -49,7 +49,7 @@
     (let [args-map {op/$set set op/$addToSet add-to-set}]
         (mc/update db coll-name conditions (into {} (filter #(not (empty? (get % 1))) args-map)) {:multi multi})))
 
-(defn remove 
+(defn remove
     "Remove documents"
     ([coll-name conditions]
         (mc/remove db coll-name conditions))
@@ -63,4 +63,3 @@
     (if one
         (mc/find-one-as-map db coll-name map-key-value)
 	    (mc/find-maps db coll-name map-key-value)))
-

@@ -38,6 +38,7 @@
 	"logout" auth/logout,
 	"newUser" auth/new-user,
 	"newAdmin" auth/new-admin,
+	"registerController" auth/register-controller,
 
 	"testUser" test-handler
 	"testAdmin" test-handler
@@ -73,6 +74,7 @@
 	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
 	"newUser" (permissions "admin"),
 	"newAdmin" (permissions "base"),
+	"registerController" (permissions "admin"),
 
 	"testUser" (permissions "user")
 	"testAdmin" (permissions "admin")
