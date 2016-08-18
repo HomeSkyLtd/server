@@ -6,7 +6,7 @@
       [server.handler :as handler :only [app]]
       [ring.mock.request :as mock]
       [clojure.data.json :as json]
-      [clojure.string :only [split] :as str]
+      [clojure.string :only [split join] :as str]
       (monger [core :as mg] [collection :as mc] [result :as res] [db :as md]))
 )
 
@@ -34,7 +34,7 @@
     (md/drop-db db/db)
     (testing "unauthorized - not logged in"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
-            :params {"payload" (json/write-str {"function" "test"})})
+            :params {"payload" (json/write-str {"function" "testAdmin"})})
             )) :key-fn keyword)]
             (check-body-error response-body 403)
         )
@@ -89,12 +89,57 @@
                 set-cookie-value (first ((:headers response) "Set-Cookie"))
             ]
             (is (not (nil? set-cookie-value)))
-            (println (process-header set-cookie-value))
             (let [cookie (first (process-header set-cookie-value))]
                 (is (= (first cookie) "ring-session"))
                 (def admin-cookie cookie)
                 (check-body-ok response-body)
             )
+        )
+    )
+    (testing "triggering function with proper permissions"
+        (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+            :params {"payload" (json/write-str {"function" "testAdmin"})}
+            :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+            ))) :key-fn keyword)]
+            (check-body-ok response-body)
+        )
+    )
+    (testing "triggering function with improper permissions"
+        (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+            :params {"payload" (json/write-str {"function" "testController"})}
+            :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+            ))) :key-fn keyword)]
+            (check-body-error response-body 403)
+        )
+    )
+    (testing "creating new user"
+        (let [
+                response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+                    :params {"payload" (json/write-str
+                        {"function" "newUser", "username" "user1", "password" "userpass"})}
+                    :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+                    ))) :key-fn keyword)
+                house-id (:houseId (first (db/select "agent" {"username" "admin1"})))
+                inserted-user (first (db/select "agent" {"username" "user1"}))
+            ]
+            (check-body-ok response-body)
+            (is (= house-id (:houseId inserted-user)))
+        )
+    )
+    (testing "logging out"
+        (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+            :params {"payload" (json/write-str {"function" "logout"})}
+            :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+            ))) :key-fn keyword)]
+            (check-body-ok response-body)
+        )
+    )
+    (testing "logging out twice in a row"
+        (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+            :params {"payload" (json/write-str {"function" "logout"})}
+            :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+            ))) :key-fn keyword)]
+            (check-body-error response-body 403)
         )
     )
 )

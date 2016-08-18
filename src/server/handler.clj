@@ -15,7 +15,7 @@
 		[server.modules.state.state :as state]
 		[server.modules.rule.rule :as rule]))
 
-(defn test-handler [obj] obj)
+(defn test-handler [_ _ _] {:status 200})
 
 ;FIXME uncomment when implemented
 (def ^:private function-handlers {
@@ -35,11 +35,13 @@
 	; "setNodeState" node/set-node-state,
 	;
 	"login" auth/login,
-	; "logout" auth/logout,
-	; "newUser" auth/new-user,
+	"logout" auth/logout,
+	"newUser" auth/new-user,
 	"newAdmin" auth/new-admin,
 
-	"test" test-handler
+	"testUser" test-handler
+	"testAdmin" test-handler
+	"testController" test-handler
 	})
 
 ; Granting base permission to a function means anyone can access it
@@ -68,11 +70,13 @@
 	; "setNodeState" node/set-node-state,
 	;
 	"login" (permissions "base"),
-	; "logout" auth/logout,
-	; "newUser" auth/new-user,
+	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
+	"newUser" (permissions "admin"),
 	"newAdmin" (permissions "base"),
 
-	"test" (bit-or (permissions "user") (permissions "admin"))
+	"testUser" (permissions "user")
+	"testAdmin" (permissions "admin")
+	"testController" (permissions "controller")
 	})
 
 (defn- build-response-json
@@ -85,15 +89,24 @@
 	([response-map] (build-response-json response-map 500 ""))
 )
 
-(defn- handler [{params :params}]
+(defn- get-session-permission [session]
+	(if (nil? (:permission session))
+		0
+		(permissions (:permission session))
+	)
+)
+
+(defn- handler [{params :params session :session}]
 	(let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
 			function (params_map :function)
 			obj (dissoc params_map :function)
-			permission (bit-or (permissions "base") (permissions "controller")) ;FIXME get this from session
+			permission (bit-or (permissions "base") (get-session-permission session))
+			houseId (:houseId session)
+			userId (:userId session)
 		]
-
+		; (println session)
 		(if (or (nil? function) (nil? (function-handlers function)))
 			(build-response-json 400 "No function found!")
 			(cond
@@ -105,11 +118,11 @@
 					)
 				;If everything OK
 				:else
-					(let [	result ((function-handlers function) obj nil)
+					(let [	result ((function-handlers function) obj houseId userId)
 							session (:session result)]
-						(if (nil? session)
-							(build-response-json result)
+						(if (contains? result :session)
 							{:status 200 :body (build-response-json (dissoc result :session)) :session session}
+							(build-response-json result)
 						)
 					)
 			)
