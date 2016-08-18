@@ -39,12 +39,12 @@
 	)
 )
 
-(defn insert? [coll-name obj &{:keys [return-inserted] :or {return-inserted false}}]
+(defn insert? [coll-name obj]
     "Same as insert, but returns true if insert was ok and false otherwise"
-    (res/acknowledged? (insert coll-name obj :return-inserted return-inserted)))
+    (res/acknowledged? (insert coll-name obj)))
 
 
-(defn server.db/update [coll-name conditions 
+(defn server.db/update [coll-name conditions
     &{:keys [set add-to-set multi] :or {set {} add-to-set {} multi true}}]
     "Updates documents"
     (let [args-map {op/$set set op/$addToSet add-to-set}]
