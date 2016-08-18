@@ -52,12 +52,11 @@
                         )
                 )
             )
+            {:status 400 :errorMessage "username/password cannot be blank"}
         )
         {:status 400 :errorMessage "already logged in, log out first"}
     )
 
-        {:status 400 :errorMessage "username/password cannot be blank"}
-    )
 )
 
 (defn new-user [obj house-id _]
@@ -82,7 +81,7 @@
         (if (empty? controller)
             {:status 400, :errorMessage "invalid controller specified"}
             (do
-                (db/update "agent" {:controllerId (:controllerId controller)}
+                (db/update "agent" {:controllerId (:controllerId (first controller))}
                     :set {"houseId" house-id})
                 {:status 200}
             )

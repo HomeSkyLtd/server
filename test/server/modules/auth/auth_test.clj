@@ -175,8 +175,6 @@
         )
     )
     (testing "associating new controller"
-        (db/insert "agent" {:username "controller1", :password "ctrlpass",
-            :type "controller", :controllerId 1, :houseId ""})
         (let [
                 response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
                     :params {"payload" (json/write-str
@@ -186,11 +184,11 @@
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)
-                updated-controller (db/select "agent" {"controllerId" 1})
-                admin (db/select "agent" {"username" "admin1"})
+                updated-controller (first (db/select "agent" {"controllerId" 1}))
+                admin (first (db/select "agent" {"username" "admin1"}))
             ]
             (check-body-ok response-body)
-            (is (= (:house-id admin) (:house-id updated-controller)))
+            (is (= (:houseId admin) (:houseId updated-controller)))
         )
     )
     (testing "associating inexisting controller"
@@ -289,7 +287,8 @@
                     :params {"payload" (json/write-str {
                         "function" "login",
                         "username" "admin1",
-                        "password" "mypass"})}))
+                        "password" "mypass"})}
+                    :headers {"cookie" (str (first controller-cookie) "=" (second controller-cookie))}))
                 response-body (json/read-str (:body response) :key-fn keyword)
                 set-cookie-value (first ((:headers response) "Set-Cookie"))
             ]
