@@ -61,16 +61,16 @@
 	; "newAction" (permissions "user"),
 	; "getHouseState" (permissions "user"),
 	;
-	; "newRules" (permissions "user"),
-	; "getRules" (permissions "user"),
-	; "getLearntRules" (permissions "user"),
-	;
-	; "newDetectedNode" (permissions "controller"),
-	; "setNodeExtra" (permissions "user"),
-	; "getNodes" (permissions "user"),
-	; "acceptNode" (permissions "user"),
-	; "setNodeState" (permissions "controller"),
-	;
+	"newRules" (bit-or (permissions "admin") (permissions "user")),
+	"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
+	"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
+	
+	"newDetectedNode" (permissions "controller"),
+	"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
+	"getNodes" (bit-or (permissions "user") (permissions "admin")),
+	"acceptNode" (bit-or (permissions "user") (permissions "admin")),
+	"setNodeState" (permissions "controller"),
+	
 	"login" (permissions "base"),
 	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
 	"newUser" (permissions "admin"),
