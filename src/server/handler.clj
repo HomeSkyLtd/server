@@ -24,16 +24,16 @@
 	; "newAction" state/new-action,
 	; "getHouseState" state/get-house-state,
 	;
-	; "newRules" rule/new-rules,
-	; "getRules" rule/get-rules,
-	; "getLearntRules" rule/get-learnt-rules,
-	;
-	; "newDetectedNode" node/new-detected-node,
-	; "setNodeExtra" node/set-node-extra,
-	; "getNodes" node/get-nodes,
-	; "acceptNode" node/accept-node,
-	; "setNodeState" node/set-node-state,
-	;
+	"newRules" rule/new-rules,
+	"getRules" rule/get-rules,
+	"getLearntRules" rule/get-learnt-rules,
+	
+	"newDetectedNodes" node/new-detected-nodes,
+	"setNodeExtra" node/set-node-extra,
+	"getNodesInfo" node/get-nodes-info,
+	"acceptNode" node/accept-node,
+	"setNodeState" node/set-node-state,
+	
 	"login" auth/login,
 	"logout" auth/logout,
 	"newUser" auth/new-user,
@@ -65,9 +65,9 @@
 	"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
 	"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
 	
-	"newDetectedNode" (permissions "controller"),
+	"newDetectedNodes" (permissions "controller"),
 	"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
-	"getNodes" (bit-or (permissions "user") (permissions "admin")),
+	"getNodesInfo" (bit-or (permissions "user") (permissions "admin")),
 	"acceptNode" (bit-or (permissions "user") (permissions "admin")),
 	"setNodeState" (permissions "controller"),
 	
