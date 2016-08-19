@@ -1,7 +1,7 @@
 (ns server.db
-    (:require 
+    (:require
 		(monger [core :as mg] [collection :as mc] [result :as res] [operators :as op]))
-	(:import 
+	(:import
 		[com.mongodb MongoOptions ServerAddress DB WriteConcern]
 		[org.bson.types ObjectId]
         [java.util.logging Logger Level])
@@ -44,12 +44,13 @@
     (res/acknowledged? (insert coll-name obj)))
 
 
-(defn server.db/update [coll-name conditions &{:keys [set add-to-set multi] :or {set {} add-to-set {} multi true}}]
+(defn server.db/update [coll-name conditions
+    &{:keys [set add-to-set multi] :or {set {} add-to-set {} multi true}}]
     "Updates documents"
     (let [args-map {op/$set set op/$addToSet add-to-set}]
         (mc/update db coll-name conditions (into {} (filter #(not (empty? (get % 1))) args-map)) {:multi multi})))
 
-(defn remove 
+(defn remove
     "Remove documents"
     ([coll-name conditions]
         (mc/remove db coll-name conditions))

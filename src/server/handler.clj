@@ -15,7 +15,7 @@
 		[server.modules.state.state :as state]
 		[server.modules.rule.rule :as rule]))
 
-(defn test-handler [obj] obj)
+(defn test-handler [_ _ _] {:status 200})
 
 ;FIXME uncomment when implemented
 (def ^:private function-handlers {
@@ -35,11 +35,14 @@
 	; "setNodeState" node/set-node-state,
 	;
 	"login" auth/login,
-	; "logout" auth/logout,
-	; "newUser" auth/new-user,
+	"logout" auth/logout,
+	"newUser" auth/new-user,
 	"newAdmin" auth/new-admin,
+	"registerController" auth/register-controller,
 
-	"test" test-handler
+	"testUser" test-handler
+	"testAdmin" test-handler
+	"testController" test-handler
 	})
 
 ; Granting base permission to a function means anyone can access it
@@ -51,28 +54,32 @@
 		"admin" 8
 	})
 
+;FIXME uncomment when implemented
 (def ^:private function-permissions {
-	; "newData" state/new-data,
-	; "newCommand" state/new-command,
-	; "newAction" state/new-action,
-	; "getHouseState" state/get-house-state,
+	; "newData" (permissions "controller"),
+	; "newCommand" (permissions "controller"),
+	; "newAction" (permissions "user"),
+	; "getHouseState" (permissions "user"),
 	;
-	; "newRules" rule/new-rules,
-	; "getRules" rule/get-rules,
-	; "getLearntRules" rule/get-learnt-rules,
+	; "newRules" (permissions "user"),
+	; "getRules" (permissions "user"),
+	; "getLearntRules" (permissions "user"),
 	;
-	; "newDetectedNode" node/new-detected-node,
-	; "setNodeExtra" node/set-node-extra,
-	; "getNodes" node/get-nodes,
-	; "acceptNode" node/accept-node,
-	; "setNodeState" node/set-node-state,
+	; "newDetectedNode" (permissions "controller"),
+	; "setNodeExtra" (permissions "user"),
+	; "getNodes" (permissions "user"),
+	; "acceptNode" (permissions "user"),
+	; "setNodeState" (permissions "controller"),
 	;
 	"login" (permissions "base"),
-	; "logout" auth/logout,
-	; "newUser" auth/new-user,
+	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
+	"newUser" (permissions "admin"),
 	"newAdmin" (permissions "base"),
+	"registerController" (permissions "admin"),
 
-	"test" (bit-or (permissions "user") (permissions "admin"))
+	"testUser" (permissions "user")
+	"testAdmin" (permissions "admin")
+	"testController" (permissions "controller")
 	})
 
 (defn- build-response-json
@@ -85,15 +92,24 @@
 	([response-map] (build-response-json response-map 500 ""))
 )
 
-(defn- handler [{params :params}]
+(defn- get-session-permission [session]
+	(if (nil? (:permission session))
+		0
+		(permissions (:permission session))
+	)
+)
+
+(defn- handler [{params :params session :session}]
 	(let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
 			function (params_map :function)
 			obj (dissoc params_map :function)
-			permission (bit-or (permissions "base") (permissions "controller")) ;FIXME get this from session
+			permission (bit-or (permissions "base") (get-session-permission session))
+			houseId (:houseId session)
+			userId (:userId session)
 		]
-
+		; (println session)
 		(if (or (nil? function) (nil? (function-handlers function)))
 			(build-response-json 400 "No function found!")
 			(cond
@@ -105,11 +121,11 @@
 					)
 				;If everything OK
 				:else
-					(let [	result ((function-handlers function) obj nil)
+					(let [	result ((function-handlers function) obj houseId userId)
 							session (:session result)]
-						(if (nil? session)
-							(build-response-json result)
+						(if (contains? result :session)
 							{:status 200 :body (build-response-json (dissoc result :session)) :session session}
+							(build-response-json result)
 						)
 					)
 			)
@@ -120,7 +136,6 @@
 (defroutes app-routes
 	(GET "/" [] (utils/build-response 200 "Server running"))
 	(POST "/" request (handler request))
-	;(POST "/" request (fn [request] (println request) (handler request)))
   	(route/not-found "Not Found"))
 
 (def app
