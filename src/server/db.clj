@@ -64,3 +64,9 @@
         (mc/find-one-as-map db coll-name map-key-value)
 	    (mc/find-maps db coll-name map-key-value)))
 
+(defn select-distinct [coll-name str-key]
+	"Find distinct values for a key."
+	(mc/distinct db coll-name str-key))
+
+(defn find-rows-with-key [coll-name key]
+	(mc/find-maps db coll-name {key {op/$exists true}}))
