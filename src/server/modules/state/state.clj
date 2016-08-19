@@ -12,7 +12,23 @@
 			(if (every? true? (map #(and (contains? % :nodeId) (contains? % :dataId) (contains? % :value) (contains? % :timestamp)) data))
 				(if (and ;TODO CONTINUAR O DB UPDATE PARA O NEW COMMAND E PARA O NEW ACTION
 						(every? true? (map #(db/insert? (str "all_states_" houseId) (assoc % :controllerId controllerId)) data))
-						(db/update last_states_coll (map #(merge % (db/select last_states_coll {:houseId houseId})) data) :upsert true)
+						(every? true? 
+							(map 
+								#(db/update last_states_coll 
+									{
+										:houseId houseId,
+										:controllerId controllerId ;TODO: AGORA TEM QUE SELECIONAR, DO HOUSEID E CONTROLLERID, AQUELES QUE TEM NODEID E DATAID
+									}
+
+									{
+										:value (:value %)
+									}
+
+									:upsert true :multi false)
+								data
+							)
+						)
+					)
 					{:status 200}
 					{:status 500 :errorMessage "DB did not insert values."}
 				)

@@ -39,7 +39,7 @@
 
 
 
-
+  (comment 
 
   (testing "inserting new command ok"
     (let [obj {:command [
@@ -100,7 +100,7 @@
                     :timestamp 1471531800}]} houseId 1]
       (is (= (state/new-action obj houseId nil) {:status 400 :errorMessage "Define nodeId, commandId and value."}))))
 
-
+)
 
 
   (testing "inserting multiples"
@@ -113,7 +113,8 @@
       (is (= (state/new-data obj houseId controllerId) {:status 200}))))
 
   (testing "get house state"
-    (let [houseId 1 obj {:status 200, :state [
+    (println state/get-house-state nil 1 nil)
+    #_(let [houseId 1 obj {:status 200, :state [
       {:nodeId 3, :controllerId 1
         :data [
             {:timestamp 1471531800, :value 13, :dataId 1}], 
