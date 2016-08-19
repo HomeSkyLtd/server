@@ -1,19 +1,35 @@
 (ns server.modules.auth.auth-test
   (:use [clojure.test])
-  (:use [server.modules.node.node])
   (:require
       [server.db :as db]
       [server.handler :as handler :only [app]]
+      [server.modules.auth.auth :as auth :only [get-agents]]
       [ring.mock.request :as mock]
       [clojure.data.json :as json]
       [clojure.string :only [split join] :as str]
       (monger [core :as mg] [collection :as mc] [result :as res] [db :as md]))
 )
 
-(defn- setup-database []
+(defn- setup-database-test-handler []
     (md/drop-db db/db)
     (db/insert "agent" {:username "controller1", :password "ctrlpass",
         :type "controller", :controllerId 1, :houseId ""})
+)
+
+(defn- setup-database-test-db []
+    (md/drop-db db/db)
+    (db/insert "agent" {:username "admin1", :password "adminpass1",
+        :type "admin", :houseId "1"})
+    (db/insert "agent" {:username "admin2", :password "adminpass2",
+        :type "admin", :houseId "2"})
+    (db/insert "agent" {:username "user1", :password "userpass1",
+        :type "user", :houseId "1"})
+    (db/insert "agent" {:username "user2", :password "userpass2",
+        :type "user", :houseId "1"})
+    (db/insert "agent" {:username "controller1", :password "ctrlpass1",
+        :type "controller", :controllerId 1, :houseId "1"})
+    (db/insert "agent" {:username "controller2", :password "ctrlpass2",
+        :type "controller", :controllerId 2, :houseId "2"})
 )
 
 (defn- process-header [header-str]
@@ -36,8 +52,8 @@
     (is (not (empty? (:errorMessage response-body))))
 )
 
-(deftest test-app
-    (setup-database)
+(deftest test-handler-functions
+    (setup-database-test-handler)
 
     (testing "unauthorized - not logged in"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
@@ -294,6 +310,50 @@
             ]
             (is (nil? set-cookie-value))
             (check-body-error response-body 400)
+        )
+    )
+)
+
+(deftest test-db-functions
+    (setup-database-test-db)
+    (testing "getting all agents on house-id 1"
+        (let [
+                result (auth/get-agents "1" :user true :admin true :controller true)
+                result-grouped (group-by :type result)
+            ]
+            (is (= (count result) 4))
+            (is (= (count (result-grouped "admin")) 1))
+            (is (= (count (result-grouped "user")) 2))
+            (is (= (count (result-grouped "controller")) 1))
+        )
+    )
+    (testing "getting all agents on house-id 2"
+        (let [
+                result (auth/get-agents "2" :user true :admin true :controller true)
+                result-grouped (group-by :type result)
+            ]
+            (is (= (count result) 2))
+            (is (= (count (result-grouped "admin")) 1))
+            (is (nil? (result-grouped "user")))
+            (is (= (count (result-grouped "controller")) 1))
+        )
+    )
+    (testing "getting all agents inexisting house-id"
+        (let [
+                result (auth/get-agents "3" :user true :admin true :controller true)
+            ]
+            (is (= (count result) 0))
+        )
+    )
+    (testing "getting admins on house-id 1"
+        (let [
+                result (auth/get-agents "1" :admin true)
+                result-grouped (group-by :type result)
+            ]
+            (is (= (count result) 1))
+            (is (= (count (result-grouped "admin")) 1))
+            (is (nil? (result-grouped "user")))
+            (is (nil? (result-grouped "controller")))
         )
     )
 )
