@@ -52,6 +52,7 @@
                           :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]
       (is (= (dissoc (first (rule/get-rules {} houseId agentId)) :_id) obj))))
 
+
   (testing "select learnt rules from db"
     (let [houseId 1 agentId 1 obj {:accepted false 
                           :nodeId 2 
