@@ -12,8 +12,8 @@
 
 (defn- setup-database-test-handler []
     (md/drop-db db/db)
-    (db/insert "agent" {:username "controller1", :password "ctrlpass",
-        :type "controller", :controllerId 1, :houseId ""})
+    (db/insert "agent" {:username "controller1", :password "AYag$s+h8FdzfVnY=$TO2dl9of6ilh5KAdZ3h9cASn3Kk=",
+        :type "controller", :controllerId 1, :houseId ""}) ;hash = ctrlpass
 )
 
 (defn- setup-database-test-db []
@@ -75,7 +75,6 @@
             ]
             (is (not (nil? inserted-admin)))
             (is (not (nil? inserted-house)))
-            (is (= (:password inserted-admin) "mypass"))
             (is (= (:houseId inserted-admin) (str (:_id inserted-house))))
             (check-body-ok response-body)
         )
@@ -338,7 +337,7 @@
             (is (= (count (result-grouped "controller")) 1))
         )
     )
-    (testing "getting all agents inexisting house-id"
+    (testing "getting all agents on inexisting house-id"
         (let [
                 result (auth/get-agents "3" :user true :admin true :controller true)
             ]

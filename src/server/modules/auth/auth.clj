@@ -1,7 +1,8 @@
 (ns server.modules.auth.auth
     (:require
         [monger.operators :refer [$in $and]]
-        [server.db :as db]))
+        [server.db :as db]
+        [crypto.password.pbkdf2 :as passhash]))
 
 ; ------------------------------------------------------------------------------
 ; HELPER FUNCTIONS FOR HANDLERS
@@ -25,7 +26,12 @@
         (let [new-house (db/insert "house" {} :return-inserted true)]
             (if (nil? new-house)
                 {:status 500, :errorMessage "Failed to insert house in db"}
-                (let [inserted (db/insert? "agent" (assoc obj :type "admin" :houseId (str (:_id new-house))))]
+                (let [inserted (db/insert? "agent"
+                    (assoc obj
+                        :type "admin"
+                        :houseId (str (:_id new-house))
+                        :password (passhash/encrypt (:password obj))
+                    ))]
                     (if inserted
                         {:status 200}
                         {:status 500, :errorMessage "failed to insert admin in db"}
@@ -51,7 +57,7 @@
                     (empty? agent)
                         {:status 400, :errorMessage "invalid username/password"}
                     :else
-                        (if (= (:password obj) (:password (first agent)))
+                        (if (passhash/check (:password obj) (:password (first agent)))
                             {:status 200, :session
                                 {
                                     :houseId (:houseId (first agent)),
@@ -72,7 +78,12 @@
 (defn new-user [obj house-id _]
     "Create new user agent, associated with the agent's house-id"
     (if (valid-username-password? obj)
-            (let [inserted (db/insert? "agent" (assoc obj :type "user" :houseId house-id))]
+            (let [inserted (db/insert? "agent"
+                (assoc obj
+                    :type "user"
+                    :houseId house-id
+                    :password (passhash/encrypt (:password obj))
+                ))]
                 (if inserted
                     {:status 200}
                     {:status 500 :errorMessage "could not insert new user"}
