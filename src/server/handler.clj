@@ -17,13 +17,12 @@
 
 (defn test-handler [_ _ _] {:status 200})
 
-;FIXME uncomment when implemented
 (def ^:private function-handlers {
-	; "newData" state/new-data,
-	; "newCommand" state/new-command,
-	; "newAction" state/new-action,
-	; "getHouseState" state/get-house-state,
-	;
+	 "newData" state/new-data,
+	 "newCommand" state/new-command,
+	 "newAction" state/new-action,
+	 "getHouseState" state/get-house-state,
+	
 	"newRules" rule/new-rules,
 	"getRules" rule/get-rules,
 	"getLearntRules" rule/get-learnt-rules,
@@ -55,13 +54,12 @@
 		"admin" 8
 	})
 
-;FIXME uncomment when implemented
 (def ^:private function-permissions {
-	; "newData" (permissions "controller"),
-	; "newCommand" (permissions "controller"),
-	; "newAction" (permissions "user"),
-	; "getHouseState" (permissions "user"),
-	;
+	 "newData" (permissions "controller"),
+	 "newCommand" (permissions "controller"),
+	 "newAction" (permissions "user"),
+	 "getHouseState" (permissions "user"),
+	
 	"newRules" (bit-or (permissions "admin") (permissions "user")),
 	"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
 	"getLearntRules" (bit-or (permissions "admin") (permissions "user")),

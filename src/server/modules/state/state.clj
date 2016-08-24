@@ -15,13 +15,10 @@
 						(every? true? 
 							(map 
 								#(db/update? (str "last_states_" houseId)
-									{
-										:controllerId controllerId
-										:nodeId (:nodeId %)
-									}
-
+									{:controllerId controllerId :nodeId (:nodeId %)}
 									:set { (keyword (str "data." (:dataId %))) (:value %) }
-									:upsert true)
+									:upsert true
+								)
 								data
 							)
 						)
@@ -48,13 +45,10 @@
 						(every? true? 
 							(map 
 								#(db/update? (str "last_states_" houseId)
-									{
-										:controllerId controllerId
-										:nodeId (:nodeId %)
-									}
-
+									{:controllerId controllerId :nodeId (:nodeId %)}
 									:set { (keyword (str "command." (:commandId %))) (:value %) }
-									:upsert true)
+									:upsert true
+								)
 								command
 							)
 						)
@@ -81,13 +75,10 @@
 						(every? true? 
 							(map 
 								#(db/update? (str "last_states_" houseId)
-									{
-										:controllerId agentId
-										:nodeId (:nodeId %)
-									}
-
+									{:controllerId agentId :nodeId (:nodeId %)}
 									:set { (keyword (str "command." (:commandId %))) (:value %) }
-									:upsert true)
+									:upsert true
+								)
 								action
 							)
 						)
@@ -106,8 +97,8 @@
 
 (defn get-house-state [_ houseId _]
 	"Get from the house the values of data from sensors and commands from actuators."
-	{:status 200 :state 
-		(let [coll-name (str "last_states_" houseId)] 
-			(vec (map #(dissoc % :_id) (db/select coll-name {}))))
+	{
+		:status 200 
+		:state (vec (map #(dissoc % :_id) (db/select (str "last_states_" houseId) {})))
 	}
 )
