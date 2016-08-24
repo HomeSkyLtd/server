@@ -10,21 +10,18 @@
 	(if-not (nil? houseId)
 		(if-let [data (obj :data)]
 			(if (every? true? (map #(and (contains? % :nodeId) (contains? % :dataId) (contains? % :value) (contains? % :timestamp)) data))
-				(if (and ;TODO CONTINUAR O DB UPDATE PARA O NEW COMMAND E PARA O NEW ACTION
+				(if (and
 						(every? true? (map #(db/insert? (str "all_states_" houseId) (assoc % :controllerId controllerId)) data))
 						(every? true? 
 							(map 
-								#(db/update last_states_coll 
+								#(db/update? (str "last_states_" houseId)
 									{
-										:houseId houseId,
-										:controllerId controllerId ;TODO: AGORA TEM QUE SELECIONAR, DO HOUSEID E CONTROLLERID, AQUELES QUE TEM NODEID E DATAID
+										:controllerId controllerId
+										:nodeId (:nodeId %)
 									}
 
-									{
-										:value (:value %)
-									}
-
-									:upsert true :multi false)
+									:set { :value (:value %) }
+									:upsert true)
 								data
 							)
 						)

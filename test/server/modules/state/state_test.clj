@@ -16,6 +16,7 @@
                     :timestamp 1471531800}]} houseId 1 controllerId 1]
       (is (= (state/new-data obj houseId controllerId) {:status 200}))))
 
+(comment 
   (testing "inserting new data without houseId"
     (let [obj {:data [
                   {:nodeId 1 
@@ -39,7 +40,7 @@
 
 
 
-  (comment 
+  
 
   (testing "inserting new command ok"
     (let [obj {:command [
@@ -100,7 +101,7 @@
                     :timestamp 1471531800}]} houseId 1]
       (is (= (state/new-action obj houseId nil) {:status 400 :errorMessage "Define nodeId, commandId and value."}))))
 
-)
+
 
 
   (testing "inserting multiples"
@@ -133,3 +134,5 @@
         :command []}]}]
     (is (= (state/get-house-state nil houseId nil) obj))))
   )
+
+)
