@@ -20,7 +20,7 @@
 										:nodeId (:nodeId %)
 									}
 
-									:set { :value (:value %) }
+									:set { (keyword (str "data." (:dataId %))) (:value %) }
 									:upsert true)
 								data
 							)
@@ -45,7 +45,20 @@
 			(if (every? true? (map #(and (contains? % :nodeId) (contains? % :commandId) (contains? % :value) (contains? % :timestamp)) command))
 				(if (and 
 						(every? true? (map #(db/insert? (str "all_states_" houseId) (assoc % :controllerId controllerId)) command))
-						(every? true? (map #(db/insert? (str "last_state_" houseId) (assoc % :controllerId controllerId)) command)))
+						(every? true? 
+							(map 
+								#(db/update? (str "last_states_" houseId)
+									{
+										:controllerId controllerId
+										:nodeId (:nodeId %)
+									}
+
+									:set { (keyword (str "command." (:commandId %))) (:value %) }
+									:upsert true)
+								command
+							)
+						)
+					)
 					{:status 200}
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
@@ -64,8 +77,21 @@
 		(if-let [action (obj :action)]
 			(if (every? true? (map #(and (contains? % :nodeId) (contains? % :commandId) (contains? % :value)) action))
 				(if (and
-						(every? true? (map #(db/insert? (str "all_states_" houseId) (assoc % :agentId agentId)) action))
-						(every? true? (map #(db/insert? (str "last_state_" houseId) (assoc % :agentId agentId)) action)))
+						(every? true? (map #(db/insert? (str "all_states_" houseId) (assoc % :agentId agentId :controllerId agentId)) action))
+						(every? true? 
+							(map 
+								#(db/update? (str "last_states_" houseId)
+									{
+										:controllerId agentId
+										:nodeId (:nodeId %)
+									}
+
+									:set { (keyword (str "command." (:commandId %))) (:value %) }
+									:upsert true)
+								action
+							)
+						)
+					)
 					{:status 200}
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
@@ -81,15 +107,7 @@
 (defn get-house-state [_ houseId _]
 	"Get from the house the values of data from sensors and commands from actuators."
 	{:status 200 :state 
-		(let [coll-name (str "last_state_" houseId)] 
-		(apply vector 
-			(map (fn [id] 
-				(assoc {} 
-					:nodeId id
-					:controllerId (:controllerId (db/select coll-name {:nodeId id} :one true))
-					:data (into [] (map #(dissoc % :_id :nodeId :controllerId) (filter (fn [m] (= (m :nodeId) id)) (db/find-rows-with-key coll-name :dataId))))
-					:command (into [] (map #(dissoc % :_id :nodeId :controllerId) (filter (fn [m] (= (m :nodeId) id)) (db/find-rows-with-key coll-name :commandId))))))
-			(db/select-distinct coll-name :nodeId)))
-		)
+		(let [coll-name (str "last_states_" houseId)] 
+			(vec (map #(dissoc % :_id) (db/select coll-name {}))))
 	}
 )

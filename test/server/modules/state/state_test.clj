@@ -16,7 +16,6 @@
                     :timestamp 1471531800}]} houseId 1 controllerId 1]
       (is (= (state/new-data obj houseId controllerId) {:status 200}))))
 
-(comment 
   (testing "inserting new data without houseId"
     (let [obj {:data [
                   {:nodeId 1 
@@ -114,25 +113,10 @@
       (is (= (state/new-data obj houseId controllerId) {:status 200}))))
 
   (testing "get house state"
-    (println state/get-house-state nil 1 nil)
-    #_(let [houseId 1 obj {:status 200, :state [
-      {:nodeId 3, :controllerId 1
-        :data [
-            {:timestamp 1471531800, :value 13, :dataId 1}], 
-        :command [
-            {:timestamp 1471531800, :value 20, :commandId 1}
-            {:value 20, :commandId 1 :agentId 4}]}
-      {:nodeId 1, :controllerId 1
-        :data [
-            {:timestamp 1471531800, :value 21, :dataId 1}
-            {:timestamp 1471531802, :value 22, :dataId 2}], 
-        :command []} 
-      {:nodeId 2, :controllerId 1
-        :data [
-            {:timestamp 1471531801, :value 200, :dataId 1}
-            {:timestamp 1471531803, :value 201, :dataId 2}], 
-        :command []}]}]
+    (let [houseId 1 obj {:state [{:command {:1 20}, :controllerId 1, :data {:1 13}, :nodeId 3}
+                   {:command {:1 20}, :controllerId 4, :nodeId 3}
+                   {:controllerId 1, :data {:1 21, :2 22}, :nodeId 1}
+                   {:controllerId 1, :data {:1 200, :2 201}, :nodeId 2}],
+           :status 200}]
     (is (= (state/get-house-state nil houseId nil) obj))))
   )
-
-)
