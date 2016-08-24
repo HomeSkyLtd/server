@@ -32,6 +32,7 @@
 	"setNodeExtra" node/set-node-extra,
 	"getNodesInfo" node/get-nodes-info,
 	"acceptNode" node/accept-node,
+    "removeNode" node/remove-node,
 	"setNodeState" node/set-node-state,
 	
 	"login" auth/login,
@@ -69,7 +70,8 @@
 	"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
 	"getNodesInfo" (bit-or (permissions "user") (permissions "admin")),
 	"acceptNode" (bit-or (permissions "user") (permissions "admin")),
-	"setNodeState" (permissions "controller"),
+	"removeNode" (bit-or (permissions "user") (permissions "admin")),
+    "setNodeState" (permissions "controller"),
 	
 	"login" (permissions "base"),
 	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),

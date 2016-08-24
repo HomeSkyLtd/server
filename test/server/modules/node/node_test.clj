@@ -54,6 +54,21 @@
                 }
             ]} 0 1)
         ) 200))
+         (is (= (:status (new-detected-nodes 
+            {:node [ 
+               {:nodeId 126 :nodeClass 2 
+                :dataType 
+                    [{
+                        :dataId 5 
+                        :measureStrategy 1
+                        :type 1
+                        :range [0 50]
+                        :unit "C"
+                        :dataCategory 1
+                    }] 
+                }
+            ]} 0 0)
+        ) 200))
     )
     (testing "Invalid nodes"
         (is (= (:status (new-detected-nodes 
@@ -154,4 +169,21 @@
         (is (= (:status (set-node-state
             {:nodeId 129 :alive 0 } 0 0)
         ) 400))))
+
+
+(deftest test-remove-node
+    (testing "remove non accepted node" 
+        (is (= (:status (remove-node
+            {:nodeId 126 :controllerId 0 } 0 5)
+        ) 400)))
+    (testing "remove non existing node" 
+        (is (= (:status (remove-node
+            {:nodeId 125 :controllerId 0 } 0 5)
+        ) 400)))
+    (testing "remove accepted node" 
+        (accept-node {:nodeId 126 :controllerId 0 :accept 1} 0 5)
+        (is (= (:status (remove-node
+            {:nodeId 126 :controllerId 0 } 0 5)
+        ) 200))))
+
 
