@@ -45,10 +45,14 @@
 
 
 (defn server.db/update [coll-name conditions
-    &{:keys [set add-to-set multi] :or {set {} add-to-set {} multi true}}]
+    &{:keys [set add-to-set multi upsert] :or {set {} add-to-set {} multi true upsert false}}]
     "Updates documents"
     (let [args-map {op/$set set op/$addToSet add-to-set}]
-        (mc/update db coll-name conditions (into {} (filter #(not (empty? (get % 1))) args-map)) {:multi multi})))
+        (mc/update db coll-name conditions (into {} (filter #(not (empty? (get % 1))) args-map)) {:multi multi :upsert upsert})))
+
+(defn server.db/update? [coll-name conditions
+    &{:keys [set add-to-set multi upsert] :or {set {} add-to-set {} multi true upsert false}}]
+    (res/acknowledged? (update coll-name conditions :set set :add-to-set add-to-set :multi multi :upsert upsert)))
 
 (defn remove
     "Remove documents"

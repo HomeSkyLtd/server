@@ -17,15 +17,18 @@
 
 (defn test-handler [_ _ _] {:status 200})
 
+<<<<<<< HEAD
 (def session-storage (atom {}))
 
 ;FIXME uncomment when implemented
+=======
+>>>>>>> 9e63e938e8add0d8ad0db87f733ff0e245615375
 (def ^:private function-handlers {
-	; "newData" state/new-data,
-	; "newCommand" state/new-command,
-	; "newAction" state/new-action,
-	; "getHouseState" state/get-house-state,
-	;
+	 "newData" state/new-data,
+	 "newCommand" state/new-command,
+	 "newAction" state/new-action,
+	 "getHouseState" state/get-house-state,
+
 	"newRules" rule/new-rules,
 	"getRules" rule/get-rules,
 	"getLearntRules" rule/get-learnt-rules,
@@ -34,6 +37,7 @@
 	"setNodeExtra" node/set-node-extra,
 	"getNodesInfo" node/get-nodes-info,
 	"acceptNode" node/accept-node,
+    "removeNode" node/remove-node,
 	"setNodeState" node/set-node-state,
 
 	"login" auth/login,
@@ -56,13 +60,12 @@
 		"admin" 8
 	})
 
-;FIXME uncomment when implemented
 (def ^:private function-permissions {
-	; "newData" (permissions "controller"),
-	; "newCommand" (permissions "controller"),
-	; "newAction" (permissions "user"),
-	; "getHouseState" (permissions "user"),
-	;
+	 "newData" (permissions "controller"),
+	 "newCommand" (permissions "controller"),
+	 "newAction" (permissions "user"),
+	 "getHouseState" (permissions "user"),
+
 	"newRules" (bit-or (permissions "admin") (permissions "user")),
 	"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
 	"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
@@ -71,7 +74,8 @@
 	"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
 	"getNodesInfo" (bit-or (permissions "user") (permissions "admin")),
 	"acceptNode" (bit-or (permissions "user") (permissions "admin")),
-	"setNodeState" (permissions "controller"),
+	"removeNode" (bit-or (permissions "user") (permissions "admin")),
+    "setNodeState" (permissions "controller"),
 
 	"login" (permissions "base"),
 	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
