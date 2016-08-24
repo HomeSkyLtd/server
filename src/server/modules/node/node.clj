@@ -122,6 +122,28 @@
             {:status 400 :errorMessage (error-message valid)})))
 
 
+(defn remove-node
+    "Accept or rejects detected node"
+    [obj house-id user-id]
+    (let [valid ((validate-some 
+                (all-keys-in #{:nodeId :controllerId} :unknown-message "Invalid key")
+                (presence-of #{:nodeId :controllerId} :message "Missing field")
+                ) obj)]
+        (if (first valid)
+            (let [node (get-node house-id (:controllerId obj) (:nodeId obj))]
+                (if (nil? node)
+                    {:status 400 :errorMessage "Tried to remove non existent node"}
+                    (if (= (:accepted node) 0)
+                        {:status 400 :errorMessage "Tried to remove non accepted node"}
+                        (if (res/acknowledged?
+                                (db/remove (str "node_" house-id) (select-keys obj [:controllerId :nodeId])))
+                            ;TODO: Notify controller
+                            ;TODO: Remove node state
+                            {:status 200 }
+                            {:status 500 :errorMessage "Database error: Couldn't accept node" }))))
+            {:status 400 :errorMessage (error-message valid)})))
+
+
 (defn set-node-state
     "Set node state (as dead or alive)"
     [obj house-id controller-id]
