@@ -179,8 +179,8 @@
 			;If not authorized due to mismatched authorization
 			(zero? (bit-and permission (permissions "controller")))
 				(if (= (permissions "base") permission)
-					{:status 403 :headers {} :body "Not logged in"}
-					{:status 403 :headers {} :body "Unauthorized operation"}
+					{:status 403 :headers {"X-WebSocket-Reject-Reason" "Not logged in"}}
+					{:status 403 :headers {"X-WebSocket-Reject-Reason" "Unauthorized operation"}}
 				)
 			;If everything OK
 			:else
