@@ -3,13 +3,8 @@
 		(monger [core :as mg] [collection :as mc] [result :as res] [operators :as op]))
 	(:import
 		[com.mongodb MongoOptions ServerAddress DB WriteConcern]
-		[org.bson.types ObjectId]
-        [java.util.logging Logger Level])
+		[org.bson.types ObjectId])
     (:refer-clojure :exclude [update remove]))
-
-
-; Hide MongoDB annoying logs
-(. (. Logger getLogger "org.mongodb.driver") setLevel (. Level SEVERE))
 
 
 (defn- init-db
