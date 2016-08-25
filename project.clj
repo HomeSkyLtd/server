@@ -9,7 +9,8 @@
                  [http-kit "2.2.0"]
                  [org.clojure/data.json "0.2.6"]
                  [com.novemberain/validateur "2.5.0"]
-                 [crypto-password "0.2.0"]]
+                 [crypto-password "0.2.0"]
+                 [try-let "1.1.0"]]
   :main server.handler
   :plugins [[lein-ring "0.9.7"]]
   :ring {:handler server.handler/app}

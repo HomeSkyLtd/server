@@ -10,6 +10,7 @@
 		[ring.middleware.reload :as reload]
 		[clojure.walk :as walk]
 		[clojure.data.json :as json]
+		[try-let :refer [try-let]]
 		[server.modules.auth.auth :as auth]
 		[server.modules.node.node :as node]
 		[server.modules.state.state :as state]
@@ -17,12 +18,9 @@
 
 (defn test-handler [_ _ _] {:status 200})
 
-<<<<<<< HEAD
+
 (def session-storage (atom {}))
 
-;FIXME uncomment when implemented
-=======
->>>>>>> 9e63e938e8add0d8ad0db87f733ff0e245615375
 (def ^:private function-handlers {
 	 "newData" state/new-data,
 	 "newCommand" state/new-command,
@@ -46,8 +44,9 @@
 	"newAdmin" auth/new-admin,
 	"registerController" auth/register-controller,
 
-	"testUser" test-handler
-	"testAdmin" test-handler
+	"testBase" test-handler,
+	"testUser" test-handler,
+	"testAdmin" test-handler,
 	"testController" test-handler
 	})
 
@@ -83,8 +82,9 @@
 	"newAdmin" (permissions "base"),
 	"registerController" (permissions "admin"),
 
-	"testUser" (permissions "user")
-	"testAdmin" (permissions "admin")
+	"testBase" (permissions "base"),
+	"testUser" (permissions "user"),
+	"testAdmin" (permissions "admin"),
 	"testController" (permissions "controller")
 	})
 
@@ -106,7 +106,7 @@
 )
 
 (defn- handler [{params :params session :session}]
-	(let
+	(try-let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
 			function (params_map :function)
@@ -136,6 +136,7 @@
 					)
 			)
 		)
+		(catch Exception e (build-response-json 400 (str "Invalid POST data caused " e)))
 	)
 )
 
