@@ -16,10 +16,23 @@
 		[server.modules.state.state :as state]
 		[server.modules.rule.rule :as rule]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; STATE REFERENCES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; keeps track of active websockets channels
+(def agent-channel (atom {}))
+
+; keeps session data
+(def session-storage (atom {}))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; HANDLER CALLBACK FUNCTIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Test handler - returns status 200
 (defn test-handler [_ _ _] {:status 200})
 
-
-(def session-storage (atom {}))
 
 (def ^:private function-handlers {
 	 "newData" state/new-data,
@@ -49,6 +62,10 @@
 	"testAdmin" test-handler,
 	"testController" test-handler
 	})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; HANDLER CALLBACK FUNCTIONS - PERMISSIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Granting base permission to a function means anyone can access it
 (def permissions
@@ -88,6 +105,10 @@
 	"testController" (permissions "controller")
 	})
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; HELPER FUNCTIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- build-response-json
 	"Build JSON response. If response-map is not specified, only status and error message
 	are included in the response. If status or error message are included in response-map,
@@ -105,6 +126,11 @@
 	)
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; HANDLERS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; POST handler
 (defn- handler [{params :params session :session}]
 	(try-let
 		[
@@ -113,7 +139,7 @@
 			obj (dissoc params_map :function)
 			permission (bit-or (permissions "base") (get-session-permission session))
 			houseId (:houseId session)
-			userId (:userId session)
+			agentId (:agentId session)
 		]
 		; (println session)
 		(if (or (nil? function) (nil? (function-handlers function)))
@@ -127,7 +153,7 @@
 					)
 				;If everything OK
 				:else
-					(let [	result ((function-handlers function) obj houseId userId)
+					(let [	result ((function-handlers function) obj houseId agentId)
 							session (:session result)]
 						(if (contains? result :session)
 							{:status 200 :body (build-response-json (dissoc result :session)) :session session}
@@ -140,9 +166,70 @@
 	)
 )
 
+; Websockets handler
+(defn ws-handler [request]
+	(let
+		[
+			session (:session request)
+			houseId (:houseId session)
+			agentId (:agentId session)
+			permission (bit-or (permissions "base") (get-session-permission session))
+		]
+		(cond
+			;If not authorized due to mismatched authorization
+			(zero? (bit-and permission (permissions "controller")))
+				(if (= (permissions "base") permission)
+					{:status 403 :headers {} :body "Not logged in"}
+					{:status 403 :headers {} :body "Unauthorized operation"}
+				)
+			;If everything OK
+			:else
+				(kit/with-channel request channel
+					; (println request)
+					(swap! agent-channel assoc agentId channel)
+					(println "Received websockets call")
+					(println (str "active channels: " (count @agent-channel)))
+					(println @agent-channel)
+					(kit/on-close channel (fn [status]
+						(swap! agent-channel dissoc (first (utils/find-keys @agent-channel channel)))
+						(println "channel closed: " status)
+						(println (str "active channels: " (count @agent-channel)))
+					))
+					; (on-receive channel (fn [data] ;; echo it back
+					;                   (println (str "Received data: " data))
+					;                   (send! channel data)))
+				)
+		)
+	)
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PUBLIC FUNCTIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn send-websocket-notification! [controller-id message]
+	"
+		Sends message to controller-id through a websockets channel. Returns true
+		if successful, and false otherwise.
+	"
+	(println @agent-channel)
+	(let [channel (@agent-channel controller-id)]
+		(if (nil? channel)
+			false
+			(do
+				(kit/send! channel message)
+				true
+			)
+		)
+	)
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SERVER CONFIGURATION
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defroutes app-routes
 	(GET "/" [] (utils/build-response 200 "Server running"))
 	(POST "/" request (handler request))
+	(GET "/ws" request (ws-handler request))
   	(route/not-found "Not Found"))
 
 (def app

@@ -2,6 +2,20 @@
 	(:require 	[server.db :as db]
 			  	[clojure.data.json :as json]))
 
+
+(defn find-keys [map value]
+	"Returns the occurrences of the key related to value in map"
+	(let [values
+			(for [pair map]
+				(if (= (second pair) value)
+					(first pair)
+				)
+			)]
+		(filter #(not (nil? %)) values)
+	)
+)
+
+
 ;
 ;	WEB FUNCTIONS
 ;

@@ -61,7 +61,7 @@
                             {:status 200, :session
                                 {
                                     :houseId (:houseId (first agent)),
-                                    :userId (str (:_id (first agent)))
+                                    :agentId (str (:_id (first agent)))
                                     :permission (:type (first agent))
                                 }
                             }
