@@ -235,7 +235,7 @@
     )
     (testing "logging out twice in a row"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
-            :params {"payload" (json/write-str {"function" "logout"})}
+            :params {"payload" (json/write-str {"function" "logout", "token" "12345"})}
             :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
             ))) :key-fn keyword)]
             (check-body-error response-body 403)
@@ -247,7 +247,8 @@
                     :params {"payload" (json/write-str {
                         "function" "login",
                         "username" "user1",
-                        "password" "userpass"})}))
+                        "password" "userpass",
+                        "token" "67890"})}))
                 response-body (json/read-str (:body response) :key-fn keyword)
                 set-cookie-value (first ((:headers response) "Set-Cookie"))
             ]
@@ -256,6 +257,7 @@
                 (is (= (first cookie) "ring-session"))
                 (def user-cookie cookie)
                 (check-body-ok response-body)
+                (is (some #(contains? % "67890") (vals @handler/tokens)))
             )
         )
     )
@@ -269,10 +271,11 @@
     )
     (testing "logging out user account"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
-            :params {"payload" (json/write-str {"function" "logout"})}
+            :params {"payload" (json/write-str {"function" "logout", "token" "67890"})}
             :headers {"cookie" (str (first user-cookie) "=" (second user-cookie))}
             ))) :key-fn keyword)]
             (check-body-ok response-body)
+            (is (every? empty? (vals @handler/tokens)))
         )
     )
     (testing "logging in as controller"
