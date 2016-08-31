@@ -2,7 +2,7 @@
   (:use [clojure.test])
   (:require
       [server.db :as db]
-      [server.handler :as handler :only [app]]
+      [server.handler :as handler :only [app tokens]]
       [server.modules.auth.auth :as auth :only [get-agents]]
       [ring.mock.request :as mock]
       [clojure.data.json :as json]
@@ -147,7 +147,8 @@
                     :params {"payload" (json/write-str {
                         "function" "login",
                         "username" "admin1",
-                        "password" "mypass"})}))
+                        "password" "mypass",
+                        "token" "12345"})}))
                 response-body (json/read-str (:body response) :key-fn keyword)
                 set-cookie-value (first ((:headers response) "Set-Cookie"))
             ]
@@ -156,6 +157,7 @@
                 (is (= (first cookie) "ring-session"))
                 (def admin-cookie cookie)
                 (check-body-ok response-body)
+                (is (contains? (first (vals @handler/tokens)) "12345"))
             )
         )
     )
@@ -222,10 +224,13 @@
     )
     (testing "logging out admin account"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
-            :params {"payload" (json/write-str {"function" "logout"})}
+            :params {"payload" (json/write-str {"function" "logout", "token" "12345"})}
             :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
             ))) :key-fn keyword)]
+
             (check-body-ok response-body)
+            (println @handler/tokens)
+            (is (empty? (first (vals @handler/tokens))))
         )
     )
     (testing "logging out twice in a row"
