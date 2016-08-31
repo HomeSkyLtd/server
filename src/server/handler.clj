@@ -26,6 +26,9 @@
 ; keeps session data
 (def session-storage (atom {}))
 
+; keeps token per user
+(def tokens (atom {})
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLER CALLBACK FUNCTIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,10 +38,10 @@
 
 
 (def ^:private function-handlers {
-	 "newData" state/new-data,
-	 "newCommand" state/new-command,
-	 "newAction" state/new-action,
-	 "getHouseState" state/get-house-state,
+	"newData" state/new-data,
+	"newCommand" state/new-command,
+	"newAction" state/new-action,
+	"getHouseState" state/get-house-state,
 
 	"newRules" rule/new-rules,
 	"getRules" rule/get-rules,
@@ -77,10 +80,10 @@
 	})
 
 (def ^:private function-permissions {
-	 "newData" (permissions "controller"),
-	 "newCommand" (permissions "controller"),
-	 "newAction" (permissions "user"),
-	 "getHouseState" (permissions "user"),
+	"newData" (permissions "controller"),
+	"newCommand" (permissions "controller"),
+	"newAction" (permissions "user"),
+	"getHouseState" (permissions "user"),
 
 	"newRules" (bit-or (permissions "admin") (permissions "user")),
 	"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
@@ -131,7 +134,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; POST handler
-(defn- handler [{params :params session :session}]
+(defn- handler [{params :params session :session token :token}]
 	(try-let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
@@ -156,7 +159,7 @@
 					(let [	result ((function-handlers function) obj houseId agentId)
 							session (:session result)]
 						(if (contains? result :session)
-							{:status 200 :body (build-response-json (dissoc result :session)) :session session}
+							{:status 200 :body (build-response-json (dissoc result :session)) :session (assoc session :token token)}
 							(build-response-json result)
 						)
 					)
