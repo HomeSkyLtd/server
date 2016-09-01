@@ -132,7 +132,8 @@
   (testing "sending request to FCM server."
     (let [token "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
           response (state/notify-action-result token "Something happened")]
-      (println response)
+      (is (= (:status response) 200))
+      (is (= ((read-string (apply str (filter (complement #{\:}) (:body response)))) "success") 1))
     )
   )
 )

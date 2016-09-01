@@ -2,11 +2,10 @@
 	(:require
 		[server.db :as db]
 		[monger.operators :refer :all]
-		[clj-http.client :as client]
-		[clojure.data.json :as json]))
+		[clojure.data.json :as json]
+		[server.utils :as utils]))
 
 (def ^:private last_states_coll "last_states")
-(def ^:private auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA")
 
 (defn new-data [obj houseId controllerId]
 	"Save new data captured by the leafs in the house."
@@ -106,13 +105,6 @@
 	}
 )
 
-(defn- build-msg [token msg]
-	(str "{\"notification\": {\"body\":\"" msg "\"},\"to\":\"" token "\"}"))
-
 (defn notify-action-result[token msg]
-	"Send to FCM an notification with the device's token."
-	(client/post "https://fcm.googleapis.com/fcm/send"
-		{:body (build-msg token msg)
-		 :headers {"Authorization" auth-key "Content-Type" "application/json"}}
-	)
-)
+	"Send a notification to user's device with new action detected."
+	(utils/send-notification token msg))
