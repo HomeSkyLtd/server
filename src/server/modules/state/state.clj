@@ -112,13 +112,7 @@
 (defn notify-action-result[token msg]
 	"Send to FCM an notification with the device's token."
 	(client/post "https://fcm.googleapis.com/fcm/send"
-		{
-		 	:body (build-msg token msg)
-			:headers 
-			{
-				"Authorization" "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"
-				"Content-Type" "application/json"
-			}
-		}
+		{:body (build-msg token msg)
+		 :headers {"Authorization" auth-key "Content-Type" "application/json"}}
 	)
 )

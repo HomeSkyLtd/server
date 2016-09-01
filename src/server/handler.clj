@@ -27,7 +27,7 @@
 (def session-storage (atom {}))
 
 ; keeps token per user
-(def tokens (atom {})
+(def tokens (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLER CALLBACK FUNCTIONS
@@ -157,9 +157,36 @@
 				;If everything OK
 				:else
 					(let [	result ((function-handlers function) obj houseId agentId)
-							session (:session result)]
+							session (:session result)
+							token (:token result)
+							kill-token (:kill-token result)]
+						
+						; Handle token creation / destruction
+						(if (not (nil? (first (vals token))))
+							(if (contains? @tokens (first (keys token)))
+								(swap! tokens assoc 
+									(first (keys token)) 
+									(conj (@tokens (first (keys token))) (first (vals token)))
+								)
+								(swap! tokens assoc
+									(first (keys token))
+									#{(first (vals token))}
+								)
+							)
+						)
+						(if (not (nil? kill-token))
+							(if (contains? @tokens (first (keys kill-token)))
+								(swap! tokens assoc 
+									(first (keys kill-token)) 
+									(disj (@tokens (first (keys kill-token))) (first (vals kill-token)))
+								)
+								(println "Warning: trying to delete inexisting token")
+							)
+						)
+
+
 						(if (contains? result :session)
-							{:status 200 :body (build-response-json (dissoc result :session)) :session (assoc session :token token)}
+							{:status 200 :body (build-response-json (dissoc result :session)) :session session}
 							(build-response-json result)
 						)
 					)

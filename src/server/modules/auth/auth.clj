@@ -50,7 +50,11 @@
     "
     (if (nil? house-id)
         (if (valid-username-password? obj)
-            (let [agent (db/select "agent" {"username" (:username obj)})]
+            (let 
+                [
+                    agent (db/select "agent" {"username" (:username obj)})
+                    token (obj :token)
+                ]
                 (cond
                     (nil? agent)
                         {:status 500 :errorMessage "could not retrieve agent data"}
@@ -58,12 +62,15 @@
                         {:status 400, :errorMessage "invalid username/password"}
                     :else
                         (if (passhash/check (:password obj) (:password (first agent)))
-                            {:status 200, :session
-                                {
-                                    :houseId (:houseId (first agent)),
-                                    :agentId (str (:_id (first agent)))
-                                    :permission (:type (first agent))
-                                }
+                            {
+                                :status 200, 
+                                :session
+                                    {
+                                        :houseId (:houseId (first agent)),
+                                        :agentId (str (:_id (first agent)))
+                                        :permission (:type (first agent))
+                                    }
+                                :token {(keyword (str (:_id (first agent)))) token}
                             }
                         )
                 )
@@ -94,9 +101,9 @@
 )
 
 
-(defn logout [obj _ _]
+(defn logout [obj _ agent-id]
     "Logs user out, sets session to nil"
-    {:status 200, :session nil}
+    {:status 200, :session nil, :kill-token {(keyword agent-id) (obj :token)}}
 )
 
 (defn register-controller [obj house-id _]
