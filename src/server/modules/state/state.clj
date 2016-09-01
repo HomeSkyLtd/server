@@ -1,9 +1,12 @@
 (ns server.modules.state.state
 	(:require
 		[server.db :as db]
-		[monger.operators :refer :all]))
+		[monger.operators :refer :all]
+		[clj-http.client :as client]
+		[clojure.data.json :as json]))
 
 (def ^:private last_states_coll "last_states")
+(def ^:private auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA")
 
 (defn new-data [obj houseId controllerId]
 	"Save new data captured by the leafs in the house."
@@ -101,4 +104,21 @@
 		:status 200 
 		:state (vec (map #(dissoc % :_id) (db/select (str "last_states_" houseId) {})))
 	}
+)
+
+(defn- build-msg [token msg]
+	(str "{\"notification\": {\"body\":\"" msg "\"},\"to\":\"" token "\"}"))
+
+(defn notify-action-result[token msg]
+	"Send to FCM an notification with the device's token."
+	(client/post "https://fcm.googleapis.com/fcm/send"
+		{
+		 	:body (build-msg token msg)
+			:headers 
+			{
+				"Authorization" "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"
+				"Content-Type" "application/json"
+			}
+		}
+	)
 )

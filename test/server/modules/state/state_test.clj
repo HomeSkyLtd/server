@@ -119,4 +119,20 @@
                    {:controllerId 1, :data {:1 200, :2 201}, :nodeId 2}],
            :status 200}]
     (is (= (state/get-house-state nil houseId nil) obj))))
+
+
+
+
+
+
+
+
+
+
+  (testing "sending request to FCM server."
+    (let [token "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
+          response (state/notify-action-result token "Something happened")]
+      (println response)
+    )
   )
+)
