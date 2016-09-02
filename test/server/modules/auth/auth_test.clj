@@ -229,7 +229,6 @@
             ))) :key-fn keyword)]
 
             (check-body-ok response-body)
-            (println @handler/tokens)
             (is (empty? (first (vals @handler/tokens))))
         )
     )
