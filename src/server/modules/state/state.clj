@@ -1,7 +1,9 @@
 (ns server.modules.state.state
 	(:require
 		[server.db :as db]
-		[monger.operators :refer :all]))
+		[monger.operators :refer :all]
+		[clojure.data.json :as json]
+		[server.utils :as utils]))
 
 (def ^:private last_states_coll "last_states")
 
@@ -102,3 +104,7 @@
 		:state (vec (map #(dissoc % :_id) (db/select (str "last_states_" houseId) {})))
 	}
 )
+
+(defn notify-action-result[token msg]
+	"Send a notification to user's device with new action detected."
+	(utils/send-notification token msg))

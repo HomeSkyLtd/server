@@ -12,6 +12,7 @@
                  [crypto-password "0.2.0"]
                  [try-let "1.1.0"]
                  [org.slf4j/slf4j-nop "1.7.12"]
+                 [clj-http "3.2.0"]
                  ]
   :main server.handler
   :plugins [[lein-ring "0.9.7"]]

@@ -1,7 +1,7 @@
 (ns server.utils
 	(:require 	[server.db :as db]
-			  	[clojure.data.json :as json]))
-
+			  	[clojure.data.json :as json]
+			  	[clj-http.client :as client]))
 
 (defn find-keys [map value]
 	"Returns the occurrences of the key related to value in map"
@@ -35,6 +35,18 @@
 	(if (empty? (:session request))
 		(build-response 403 "<h1>FORBIDDEN</h1>")
 		(build-response 200 "<h3>Session on</h3>")))
+
+(defn- build-msg [token msg]
+	(str "{\"notification\": {\"body\":\"" msg "\"},\"to\":\"" token "\"}"))
+
+(def ^:private auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA")
+
+(defn send-notification [token msg]
+	(client/post "https://fcm.googleapis.com/fcm/send"
+		{:body (build-msg token msg)
+		 :headers {"Authorization" auth-key "Content-Type" "application/json"}}
+	)
+)
 
 ;
 ;	DATABASE FUNCTIONS

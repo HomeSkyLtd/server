@@ -1,7 +1,8 @@
 (ns server.modules.node.node
     (:require [server.db :as db]
               (monger [core :as mg] [result :as res])
-              [validateur.validation :refer :all])
+              [validateur.validation :refer :all]
+              [server.utils :as utils])
     )
 
 ;
@@ -161,3 +162,8 @@
                         {:status 200 }
                         {:status 500 :errorMessage "Database error: Couldn't set node state" })))
             {:status 400 :errorMessage (error-message valid)})))
+
+
+(defn notify-detected-nodes [token msg]
+    "Send a notification to user's device with new detected nodes."
+    (utils/send-notification token msg))
