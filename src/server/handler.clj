@@ -134,7 +134,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; POST handler
-(defn- handler [{params :params session :session token :token}]
+(defn- handler [{params :params session :session}]
 	(try-let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
