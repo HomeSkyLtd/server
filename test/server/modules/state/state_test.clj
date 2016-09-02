@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [server.modules.state.state :as state]
             [server.db :as db]
+            [server.utils :as utils]
             (monger [db :as md] [collection :as mc])))
 
 (deftest test-app
@@ -130,10 +131,14 @@
 
 
   (testing "sending request to FCM server."
-    (let [token "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
-          response (state/notify-action-result token "Something happened")]
-      (is (= (:status response) 200))
-      (is (= ((read-string (apply str (filter (complement #{\:}) (:body response)))) "success") 1))
+    (let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
+          token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
+          houseId 1
+          tokens {1 #{token1} 2 #{token2}}
+          response (state/notify-action-result houseId tokens "New action")]
+      (is true? response)
+      (doall (map #(is (= (:status %) 200)) @utils/thread-pool))
+      (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @utils/thread-pool))
     )
   )
 )

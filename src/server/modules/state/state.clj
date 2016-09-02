@@ -105,6 +105,6 @@
 	}
 )
 
-(defn notify-action-result[token msg]
+(defn notify-action-result[houseId tokens msg]
 	"Send a notification to user's device with new action detected."
-	(utils/send-notification token msg))
+	(utils/send-notification (tokens houseId) msg))

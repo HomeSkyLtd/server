@@ -3,6 +3,8 @@
 			  	[clojure.data.json :as json]
 			  	[clj-http.client :as client]))
 
+(def thread-pool (agent '()))
+
 (defn find-keys [map value]
 	"Returns the occurrences of the key related to value in map"
 	(let [values
@@ -39,14 +41,18 @@
 (defn- build-msg [token msg]
 	(str "{\"notification\": {\"body\":\"" msg "\"},\"to\":\"" token "\"}"))
 
-(def ^:private auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA")
-
-(defn send-notification [token msg]
-	(client/post "https://fcm.googleapis.com/fcm/send"
-		{:body (build-msg token msg)
-		 :headers {"Authorization" auth-key "Content-Type" "application/json"}}
+(defn- send-on-thread [tokens msg]
+	(let [auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"]
+		(map #(client/post "https://fcm.googleapis.com/fcm/send"
+			{:body (build-msg % msg)
+			 :headers {"Authorization" auth-key "Content-Type" "application/json"}
+			}) tokens
+		)
 	)
 )
+
+(defn send-notification [tokens msg]
+	(await-for 1000 (send thread-pool concat (send-on-thread tokens msg))))
 
 ;
 ;	DATABASE FUNCTIONS

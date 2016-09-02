@@ -164,6 +164,6 @@
             {:status 400 :errorMessage (error-message valid)})))
 
 
-(defn notify-detected-nodes [token msg]
+(defn notify-detected-nodes [houseId tokens msg]
     "Send a notification to user's device with new detected nodes."
-    (utils/send-notification token msg))
+    (utils/send-notification (tokens houseId) msg))
