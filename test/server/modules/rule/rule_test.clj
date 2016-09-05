@@ -8,7 +8,7 @@
 (deftest test-app
 
   (md/drop-db db/db)
-  (mc/insert db/db "rules_1" {:agentId 1 :accepted false :nodeId 2 :controllerId 1 :commandId 1 :value 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]})
+  (mc/insert db/db "rules_1" {:accepted false :nodeId 2 :controllerId 1 :commandId 1 :value 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]})
 
   (testing "new node ok"
     (let [obj {:rules [
@@ -16,53 +16,51 @@
                     :controllerId 1
                     :commandId 1 
                     :value 20 
-                    :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]} houseId 1 agentId 1]
-      (is (= (rule/new-rules obj houseId agentId) {:status 200}))))
+                    :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]} houseId 1]
+      (is (= (rule/new-rules obj houseId nil) {:status 200}))))
 
   (testing "new node without rules"
-    (let [obj nil houseId 1 agentId 1]
-      (is (= (rule/new-rules obj houseId agentId) {:status 400 :errorMessage "Rules not defined"}))))
+    (let [obj nil houseId 1]
+      (is (= (rule/new-rules obj houseId nil) {:status 400 :errorMessage "Rules not defined"}))))
 
  
   (testing "new node without nodeId"
     (let [obj {:rules [{:controllerId 1 :commandId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
-            houseId 1 agentId 1]
-      (is (= (rule/new-rules obj houseId agentId) 
+            houseId 1]
+      (is (= (rule/new-rules obj houseId nil) 
                 {:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}))))
 
   (testing "new node without controllerId"
     (let [obj {:rules [{:nodeId 1 :commandId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
-            houseId 1 agentId 1]
-      (is (= (rule/new-rules obj houseId agentId) 
+            houseId 1]
+      (is (= (rule/new-rules obj houseId nil) 
                 {:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}))))
 
   (testing "new node without commandId"
     (let [obj {:rules [{:controllerId 1 :nodeId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
-            houseId 1 agentId 1]
-      (is (= (rule/new-rules obj houseId agentId) 
+            houseId 1]
+      (is (= (rule/new-rules obj houseId nil) 
                 {:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}))))
 
 
   (testing "select from db"
-    (let [houseId 1 agentId 1 obj {:accepted true
+    (let [houseId 1 obj {:accepted true
                           :nodeId 1
                           :controllerId 1
-                          :agentId 1
                           :commandId 1 
                           :value 20
                           :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]
-      (is (= (dissoc (first (rule/get-rules {} houseId agentId)) :_id) obj))))
+      (is (= (dissoc (first (rule/get-rules {} houseId nil)) :_id) obj))))
 
 
   (testing "select learnt rules from db"
-    (let [houseId 1 agentId 1 obj {:accepted false 
+    (let [houseId 1 obj {:accepted false 
                           :nodeId 2 
                           :controllerId 1
-                          :agentId 1
                           :commandId 1 
                           :value 1 
                           :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]}]
-      (is (= (dissoc (first (rule/get-learnt-rules {} houseId agentId)) :_id) obj))))
+      (is (= (dissoc (first (rule/get-learnt-rules {} houseId nil)) :_id) obj))))
 
 
     (testing "sending request to FCM server."
