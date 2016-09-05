@@ -83,8 +83,8 @@
 (def ^:private function-permissions {
 	"newData" (permissions "controller"),
 	"newCommand" (permissions "controller"),
-	"newAction" (permissions "user"),
-	"getHouseState" (permissions "user"),
+	"newAction" (bit-or (permissions "user") (permissions "admin")),
+	"getHouseState" (bit-or (permissions "user") (permissions "admin")),
 
 	"newRules" (bit-or (permissions "admin") (permissions "user")),
 	"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
@@ -137,6 +137,7 @@
 
 ; POST handler
 (defn- handler [{params :params session :session}]
+	; (println params)
 	(try-let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
@@ -188,8 +189,8 @@
 
 
 						(if (contains? result :session)
-							{:status 200 :body (build-response-json (dissoc result :session)) :session session}
-							(build-response-json result)
+							{:status 200 :body (build-response-json (dissoc result :session :token :kill-token)) :session session}
+							(build-response-json (dissoc result :token :kill-token))
 						)
 					)
 			)

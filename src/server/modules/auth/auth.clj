@@ -20,6 +20,7 @@
 
 ; ------------------------------------------------------------------------------
 ; FUNCTION HANDLERS
+; todo: check if specified username already exists
 (defn new-admin [obj _ _]
     "Create new admin associated with a new house-id"
     (if (valid-username-password? obj)

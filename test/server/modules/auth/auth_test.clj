@@ -13,7 +13,7 @@
 (defn- setup-database-test-handler []
     (md/drop-db db/db)
     (db/insert "agent" {:username "controller1", :password "AYag$s+h8FdzfVnY=$TO2dl9of6ilh5KAdZ3h9cASn3Kk=",
-        :type "controller", :controllerId 1, :houseId ""}) ;hash = ctrlpass
+        :type "controller", :controllerId "1", :houseId ""}) ;hash = ctrlpass
 )
 
 (defn- setup-database-test-db []
@@ -27,9 +27,9 @@
     (db/insert "agent" {:username "user2", :password "userpass2",
         :type "user", :houseId "1"})
     (db/insert "agent" {:username "controller1", :password "ctrlpass1",
-        :type "controller", :controllerId 1, :houseId "1"})
+        :type "controller", :controllerId "1", :houseId "1"})
     (db/insert "agent" {:username "controller2", :password "ctrlpass2",
-        :type "controller", :controllerId 2, :houseId "2"})
+        :type "controller", :controllerId "2", :houseId "2"})
 )
 
 (defn- process-header [header-str]
@@ -197,11 +197,11 @@
                     :params {"payload" (json/write-str
                         {
                             "function" "registerController",
-                            "controllerId" 1
+                            "controllerId" "1"
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)
-                updated-controller (first (db/select "agent" {"controllerId" 1}))
+                updated-controller (first (db/select "agent" {"controllerId" "1"}))
                 admin (first (db/select "agent" {"username" "admin1"}))
             ]
             (check-body-ok response-body)
@@ -214,7 +214,7 @@
                     :params {"payload" (json/write-str
                         {
                             "function" "registerController",
-                            "controllerId" 2
+                            "controllerId" "2"
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)
