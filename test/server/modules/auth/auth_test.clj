@@ -247,7 +247,7 @@
                         "function" "login",
                         "username" "user1",
                         "password" "userpass",
-                        "token" "67890"})}))
+                        "token" "67891"})}))
                 response-body (json/read-str (:body response) :key-fn keyword)
                 set-cookie-value (first ((:headers response) "Set-Cookie"))
             ]
@@ -256,8 +256,23 @@
                 (is (= (first cookie) "ring-session"))
                 (def user-cookie cookie)
                 (check-body-ok response-body)
-                (is (some #(contains? % "67890") (vals @handler/tokens)))
+                (is (some #(contains? % "67891") (vals @handler/tokens)))
             )
+        )
+    )
+    (testing "set token"
+        (let [
+                response (handler/app (assoc (mock/request :post "/")
+                    :params {"payload" (json/write-str {
+                        "function" "setToken",
+                        "kill-token" "67891"
+                        "token" "67890"})}
+                    :headers {"cookie" (str (first user-cookie) "=" (second user-cookie))}))
+                response-body (json/read-str (:body response) :key-fn keyword)
+            ]
+            (check-body-ok response-body)
+            (is (some #(contains? % "67890") (vals @handler/tokens)))
+            (is (every? #(not (contains? % "67891")) (vals @handler/tokens)))
         )
     )
     (testing "triggering user function with proper permissions"

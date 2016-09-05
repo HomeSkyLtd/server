@@ -59,6 +59,7 @@
 	"newUser" auth/new-user,
 	"newAdmin" auth/new-admin,
 	"registerController" auth/register-controller,
+	"setToken" auth/set-token,
 
 	"testBase" test-handler,
 	"testUser" test-handler,
@@ -101,6 +102,7 @@
 	"newUser" (permissions "admin"),
 	"newAdmin" (permissions "base"),
 	"registerController" (permissions "admin"),
+	"setToken" (bit-or (permissions "admin") (permissions "user")),
 
 	"testBase" (permissions "base"),
 	"testUser" (permissions "user"),

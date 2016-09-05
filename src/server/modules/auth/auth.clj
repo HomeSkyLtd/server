@@ -52,25 +52,25 @@
         (if (valid-username-password? obj)
             (let 
                 [
-                    agent (db/select "agent" {"username" (:username obj)})
+                    agent-obj (db/select "agent" {"username" (:username obj)})
                     token (obj :token)
                 ]
                 (cond
-                    (nil? agent)
+                    (nil? agent-obj)
                         {:status 500 :errorMessage "could not retrieve agent data"}
-                    (empty? agent)
+                    (empty? agent-obj)
                         {:status 400, :errorMessage "invalid username/password"}
                     :else
-                        (if (passhash/check (:password obj) (:password (first agent)))
+                        (if (passhash/check (:password obj) (:password (first agent-obj)))
                             {
                                 :status 200, 
                                 :session
                                     {
-                                        :houseId (:houseId (first agent)),
-                                        :agentId (str (:_id (first agent)))
-                                        :permission (:type (first agent))
+                                        :houseId (:houseId (first agent-obj)),
+                                        :agentId (str (:_id (first agent-obj)))
+                                        :permission (:type (first agent-obj))
                                     }
-                                :token {(keyword (str (:_id (first agent)))) token}
+                                :token {(keyword (str (:_id (first agent-obj)))) token}
                             }
                         )
                 )
@@ -119,6 +119,11 @@
         )
     )
 )
+
+(defn set-token [obj _ agent-id]
+    "Change a token to a new value"
+    (let [parse (fn [key] {key {(keyword agent-id) (key obj)}})]
+            (merge {:status 200} (parse :kill-token) (parse :token))))
 
 ; ------------------------------------------------------------------------------
 ; PRIVATE HELPERS FOR DB FUNCTIONS
