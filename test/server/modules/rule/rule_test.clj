@@ -8,7 +8,7 @@
 (deftest test-app
 
   (md/drop-db db/db)
-  (mc/insert db/db "rules_1" {:accepted false :nodeId 2 :controllerId 1 :commandId 1 :value 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]})
+  (mc/insert db/db "rules_1" {:accepted 0 :nodeId 2 :controllerId 1 :commandId 1 :value 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]})
 
   (testing "new node ok"
     (let [obj {:rules [
@@ -44,7 +44,7 @@
 
 
   (testing "select from db"
-    (let [houseId 1 obj {:accepted true
+    (let [houseId 1 obj {:accepted 1
                           :nodeId 1
                           :controllerId 1
                           :commandId 1 
@@ -54,7 +54,7 @@
 
 
   (testing "select learnt rules from db"
-    (let [houseId 1 obj {:accepted false 
+    (let [houseId 1 obj {:accepted 0 
                           :nodeId 2 
                           :controllerId 1
                           :commandId 1 
@@ -63,13 +63,24 @@
       (is (= (dissoc (first (rule/get-learnt-rules {} houseId nil)) :_id) obj))))
 
 
-    (testing "sending request to FCM server."
+  (testing "sending request to FCM server."
     (let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
           token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
           houseId 1
-          tokens {houseId #{token1 token2}}
+          tokens {houseId #{token1}}; token2}}
           response (rule/notify-learnt-rules houseId tokens "New rules")]
       (is true? response)
       (doall (map #(is (= (:status %) 200)) @utils/thread-pool))
       (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @utils/thread-pool))
-    )))
+    ))
+
+
+
+    (testing "accepting rule"
+      (let [houseId 1 obj {:nodeId 2 :controllerId 1 :commandId 1 :value 1}]
+        (rule/accept-rule obj houseId nil)))
+
+
+
+
+    )
