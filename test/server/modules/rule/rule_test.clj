@@ -11,12 +11,12 @@
   (mc/insert db/db "rules_1" {:accepted 0 :nodeId 2 :controllerId 1 :commandId 1 :value 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]})
 
   (testing "new node ok"
-    (let [obj {:rules [
-                  {:nodeId 1 
-                    :controllerId 1
-                    :commandId 1 
-                    :value 20 
-                    :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]} houseId 1]
+    (let [obj {:rules [{:nodeId 1 
+                        :controllerId 1
+                        :commandId 1 
+                        :value 20 
+                        :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]} 
+          houseId 1]
       (is (= (rule/new-rules obj houseId nil) {:status 200}))))
 
   (testing "new node without rules"
@@ -44,23 +44,25 @@
 
 
   (testing "select from db"
-    (let [houseId 1 obj {:accepted 1
-                          :nodeId 1
-                          :controllerId 1
-                          :commandId 1 
-                          :value 20
-                          :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]
-      (is (= (dissoc (first (rule/get-rules {} houseId nil)) :_id) obj))))
+    (let [houseId 1 obj {:status 200 
+                         :rules [{:accepted 1
+                                 :nodeId 1
+                                 :controllerId 1
+                                 :commandId 1 
+                                 :value 20
+                                 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}]
+      (is (= (rule/get-rules {} houseId nil) obj))))
 
 
   (testing "select learnt rules from db"
-    (let [houseId 1 obj {:accepted 0 
-                          :nodeId 2 
-                          :controllerId 1
-                          :commandId 1 
-                          :value 1 
-                          :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]}]
-      (is (= (dissoc (first (rule/get-learnt-rules {} houseId nil)) :_id) obj))))
+    (let [houseId 1 obj {:status 200 
+                         :rules [{:accepted 0 
+                                  :nodeId 2 
+                                  :controllerId 1
+                                  :commandId 1 
+                                  :value 1 
+                                  :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]}]}]
+      (is (= (rule/get-learnt-rules {} houseId nil) obj))))
 
 
   (testing "sending request to FCM server."
@@ -78,9 +80,6 @@
 
     (testing "accepting rule"
       (let [houseId 1 obj {:nodeId 2 :controllerId 1 :commandId 1 :value 1}]
-        (rule/accept-rule obj houseId nil)))
-
-
-
-
-    )
+        (rule/accept-rule obj houseId nil)
+        (is (= (dissoc (mc/find-one-as-map db/db "rules_1" obj) :_id) (assoc obj :accepted 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}])) 
+      ))))
