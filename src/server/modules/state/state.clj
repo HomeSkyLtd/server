@@ -71,19 +71,13 @@
 	"Save new action captured by the actuators in the house."
 	(if-not (nil? houseId)
 		(if-let [action (obj :action)]
-			(if (every? true? (map #(and (contains? % :nodeId) (contains? % :commandId) (contains? % :value)) action))
+			(if (and (contains? action :controllerId) (contains? action :nodeId) (contains? action :commandId) (contains? action :value))
 				(if (and
-						(every? true? (map #(db/insert? (str "all_states_" houseId) (assoc % :agentId agentId :controllerId agentId)) action))
-						(every? true? 
-							(map 
-								#(db/update? (str "last_states_" houseId)
-									{:controllerId agentId :nodeId (:nodeId %)}
-									:set { (keyword (str "command." (:commandId %))) (:value %) }
-									:upsert true
-								)
-								action
-							)
-						)
+						(db/insert? (str "all_states_" houseId) (assoc action :agentId agentId))
+						(db/update? (str "last_states_" houseId)
+									{:controllerId agentId :nodeId (:nodeId action)}
+									:set {(keyword (str "command." (:commandId action))) (:value action)}
+									:upsert true)
 					)
 					{:status 200}
 					{:status 500 :errorMessage "DB did not insert values."}
