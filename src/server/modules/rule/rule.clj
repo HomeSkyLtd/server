@@ -40,6 +40,19 @@
 				{:status 500 :errorMessage "DB did not update value."})
 			{:status 200 :conflictingRule result})))
 
+(defn remove-rule [obj houseId _]
+	"Remove a rule from database"
+	(let [key-vals (select-keys obj [:nodeId :controllerId :commandId :value])]
+		(if (empty? (db/select (coll-name houseId) key-vals))
+			{:status 400 :errorMessage "DB does not contain obj."}
+			(if (db/remove? (coll-name houseId) (assoc key-vals :accepted 1))
+				{:status 200}
+				{:status 500 :errorMessage "DB did not remove value."}
+			)
+		)
+	)
+)
+
 (defn notify-learnt-rules[houseId tokens msg]
 	"Send a notification to user's device with new learnt rules."
 	(utils/send-notification (tokens houseId) msg))
