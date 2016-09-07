@@ -22,7 +22,7 @@ MongoClient.connect(url, function(err, db) {
                     collection.insertMany([
                         {
                             nodeId: 1,
-                            controllerId: 1,
+                            controllerId: "1",
                             commandId: 1,
                             value: 20,
                             clauses: [[{lhs: '1.1', operator: '>', rhs: 10}]],
@@ -30,7 +30,7 @@ MongoClient.connect(url, function(err, db) {
                         }, 
                         {
                             nodeId: 2,
-                            controllerId: 1,
+                            controllerId: "1",
                             commandId: 1,
                             value: 0,
                             clauses: [[{lhs: '2.1', operator: '==', rhs: 0}]],
@@ -43,7 +43,7 @@ MongoClient.connect(url, function(err, db) {
                             collection.insertMany([
                                 {
                                     nodeId: 1,
-                                    controllerId: 1,
+                                    controllerId: "1",
                                     nodeClass: 'sensor',
                                     accepted: 1,
                                     alive: 1,
@@ -60,7 +60,7 @@ MongoClient.connect(url, function(err, db) {
                                 }, 
                                 {
                                     nodeId: 2,
-                                    controllerId: 1,
+                                    controllerId: "1",
                                     nodeClass: 'actuator',
                                     accepted: 0,
                                     alive: 1,
@@ -76,8 +76,28 @@ MongoClient.connect(url, function(err, db) {
                                 }
                             ], function(err, r) {
                                 if (err) throw err;
-
-                                db.close();
+                                var collection = db.collection('last_states_1');
+                                collection.insertMany([
+                                    {
+                                        nodeId: 1,
+                                        controllerId: "2",
+                                        data:{
+                                            1: 1.5,
+                                            2: 3
+                                        }
+                                    },
+                                    {
+                                        nodeId: 2,
+                                        controllerId: "2",
+                                        command:{
+                                            1: 3,
+                                            2: 10
+                                        }
+                                    }
+                                ], (err, r)=>{
+                                    if(err) throw err;
+                                    db.close();
+                                });
                             });
                         });
                 });
