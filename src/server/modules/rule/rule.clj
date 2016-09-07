@@ -37,8 +37,12 @@
 		(if (empty? result)
 			(if (db/update? (coll-name houseId) key-vals :set {:accepted 1})
 				{:status 200}
-				{:status 500 :errorMessage "DB did not update value."})
-			{:status 200 :conflictingRule result})))
+				{:status 500 :errorMessage "DB did not update value."}
+			)
+			{:status 200 :conflictingRule result}
+		)
+	)
+)
 
 (defn remove-rule [obj houseId _]
 	"Remove a rule from database"

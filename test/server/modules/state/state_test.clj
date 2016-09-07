@@ -76,18 +76,19 @@
 
 
   (testing "inserting new action ok"
-    (let [obj {:action [
-                  {:nodeId 3 
-                    :commandId 1 
-                    :value 20}]} houseId 1 agentId 4]
+    (let [houseId 1 agentId 4 
+          obj {:action {:controllerId 4
+                        :nodeId 3 
+                        :commandId 1 
+                        :value 20}}]
       (is (= (state/new-action obj houseId agentId) {:status 200}))))
 
   (testing "inserting new action without houseId"
-    (let [obj {:action [
-                  {:nodeId 1 
+    (let [obj {:action {:nodeId 1 
+                    :controllerId 1
                     :commandId 1 
                     :value 20 
-                    :timestamp 1471531800}]} houseId nil]
+                    :timestamp 1471531800}} houseId nil]
       (is (= (state/new-action obj houseId nil) {:status 400 :errorMessage "houseId not defined"}))))
 
   (testing "inserting new action without action"
@@ -97,6 +98,7 @@
   (testing "inserting new action without nodeId"
     (let [obj {:action [
                   {:commandId 1 
+                    :controllerId 1
                     :value 20 
                     :timestamp 1471531800}]} houseId 1]
       (is (= (state/new-action obj houseId nil) {:status 400 :errorMessage "Define nodeId, commandId and value."}))))
