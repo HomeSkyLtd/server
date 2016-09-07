@@ -56,6 +56,13 @@
     ([coll-name]
         (mc/remove db coll-name)))
 
+(defn remove?
+	"Acknowledged the remove operation"
+	([coll-name conditions]
+        (res/acknowledged? (remove coll-name conditions)))
+    ([coll-name]
+        (res/acknowledged? (remove coll-name))))
+
 
 (defn select [coll-name map-key-value &{:keys [one] :or {one false}}]
 	"Receive a collection name and a map. This map has the values to use as filter.
