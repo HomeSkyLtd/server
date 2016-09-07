@@ -76,6 +76,7 @@
                                     }
                                 :token {(keyword (str (:_id (first agent-obj)))) token}
                             }
+                            {:status 400, :errorMessage "invalid username/password"}
                         )
                 )
             )

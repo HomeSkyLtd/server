@@ -26,7 +26,7 @@ MongoClient.connect(url, function(err, db) {
                             commandId: 1,
                             value: 20,
                             clauses: [[{lhs: '1.1', operator: '>', rhs: 10}]],
-                            accepted: true
+                            accepted: 1
                         }, 
                         {
                             nodeId: 2,
@@ -34,7 +34,7 @@ MongoClient.connect(url, function(err, db) {
                             commandId: 1,
                             value: 0,
                             clauses: [[{lhs: '2.1', operator: '==', rhs: 0}]],
-                            accepted: false
+                            accepted: 0
                         }], 
                         function(err, r) {
                             if (err) throw err;
