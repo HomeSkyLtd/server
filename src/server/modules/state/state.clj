@@ -75,7 +75,7 @@
 				(if (and
 						(db/insert? (str "all_states_" houseId) (assoc action :agentId agentId))
 						(db/update? (str "last_states_" houseId)
-									{:controllerId agentId :nodeId (:nodeId action)}
+									{:controllerId (:controllerId action) :nodeId (:nodeId action)}
 									:set {(keyword (str "command." (:commandId action))) (:value action)}
 									:upsert true)
 					)
