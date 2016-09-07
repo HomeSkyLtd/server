@@ -2,7 +2,10 @@
     (:require
         [monger.operators :refer [$in $and]]
         [server.db :as db]
-        [crypto.password.pbkdf2 :as passhash]))
+        [crypto.password.pbkdf2 :as passhash]
+        [try-let :refer [try-let]])
+    (:import org.bson.types.ObjectId)
+)
 
 ; ------------------------------------------------------------------------------
 ; HELPER FUNCTIONS FOR HANDLERS
@@ -109,15 +112,16 @@
 
 (defn register-controller [obj house-id _]
     "Associate a controller with the admin's house-id"
-    (let [controller (db/select "agent" {"controllerId" (:controllerId obj)})]
+    (try-let [controller (db/select "agent" {:_id (ObjectId. (obj :controllerId))})]
         (if (empty? controller)
             {:status 400, :errorMessage "invalid controller specified"}
             (do
-                (db/update "agent" {:controllerId (:controllerId (first controller))}
+                (db/update "agent" {:_id (ObjectId. (obj :controllerId))}
                     :set {"houseId" house-id})
                 {:status 200}
             )
         )
+        (catch IllegalArgumentException e {:status 400, :errorMessage "invalid controller specified"})
     )
 )
 
