@@ -14,14 +14,12 @@
 		[server.modules.auth.auth :as auth]
 		[server.modules.node.node :as node]
 		[server.modules.state.state :as state]
-		[server.modules.rule.rule :as rule]))
+		[server.modules.rule.rule :as rule]
+		[server.notification :as notification]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; STATE REFERENCES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; keeps track of active websockets channels
-(def agent-channel (atom {}))
 
 ; keeps session data
 (def session-storage (atom {}))
@@ -210,14 +208,14 @@
 				{:status 403 :headers {"X-WebSocket-Reject-Reason" "Unauthorized operation"}}
 			)
 			(kit/with-channel request channel
-				(swap! agent-channel assoc agentId channel)
+				(swap! notification/agent-channel assoc agentId channel)
 				(println "Received websockets call")
-				(println (str "active channels: " (count @agent-channel)))
-				(println @agent-channel)
+				(println (str "active channels: " (count @notification/agent-channel)))
+				(println @notification/agent-channel)
 				(kit/on-close channel (fn [status]
-					(swap! agent-channel dissoc (first (utils/find-keys @agent-channel channel)))
+					(swap! notification/agent-channel dissoc (first (utils/find-keys @notification/agent-channel channel)))
 					(println "channel closed: " status)
-					(println (str "active channels: " (count @agent-channel)))
+					(println (str "active channels: " (count @notification/agent-channel)))
 				))
 				; (on-receive channel (fn [data] ;; echo it back
 				;                   (println (str "Received data: " data))
@@ -227,24 +225,29 @@
 	)
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PUBLIC FUNCTIONS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn send-websocket-notification!
-	"Sends message to controller-id through a websockets channel. Returns true
-	 if successful, and false otherwise."
-	[controller-id message]
-	;(println @agent-channel)
-	(let [channel (@agent-channel controller-id)]
-		(if (nil? channel)
-			false
-			(if (map? message)
-				(kit/send! channel (json/write-str message))
-				(kit/send! channel message)
-			)
-		)
-	)
-)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SERVER CONFIGURATION

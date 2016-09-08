@@ -166,4 +166,4 @@
 
 (defn notify-detected-nodes [houseId tokens msg]
     "Send a notification to user's device with new detected nodes."
-    (utils/send-notification (tokens houseId) msg))
+    (notification/send-notification (tokens houseId) msg))

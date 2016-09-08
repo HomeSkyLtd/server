@@ -3,16 +3,9 @@
 		[server.db :as db]
 		[monger.operators :refer :all]
 		[clojure.data.json :as json]
-		[server.utils :as utils]))
+		[server.notification :as notification]))
 
 (def ^:private last_states_coll "last_states")
-
-(defn- notify-new-action
-	"Send a notification of new action of a user from server to controller."
-	[action]
-	(let [controllerId (:controllerId action) 
-		  msg {:notification newAction :action (dissoc action :controllerId)}]
-		(handler/send-websocket-notification! controllerId msg)))
 
 (defn new-data 
 	"Save new data captured by the leafs in the house."
@@ -88,7 +81,7 @@
 									{:controllerId (:controllerId action) :nodeId (:nodeId action)}
 									 :set {(keyword (str "command." (:commandId action))) (:value action)}
 									 :upsert true))
-					(if (notify-action-result action)
+					(if (notification/notify-new-action action)
 						{:status 200}
 						{:status 410 :errorMessage "WebSocket channel not found."}
 					)
@@ -115,4 +108,4 @@
 (defn notify-action-result
 	"Send a notification to user's device with new action detected."
 	[houseId tokens msg]
-	(utils/send-notification (tokens houseId) msg))
+	(notification/send-notification (tokens houseId) msg))

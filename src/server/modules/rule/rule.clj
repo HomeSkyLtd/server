@@ -5,41 +5,14 @@
 
 (ns server.modules.rule.rule
 	(:require [server.db :as db]
-			  [server.utils :as utils]))
+			  [server.utils :as utils]
+			  [server.notification :as notification]))
 
 ;;##Private function
 
 (defn- coll-name 
 	"Return the collection name for a specific house."
 	[houseId] (str "rules_" houseId))
-
-;;Auxiliar functions to count the number of new rules per controller
-
-(defn list-controller-ids
-	"Return a list of distinct controller ids"
-	[rules]
-	(distinct (map #(:controllerId %) rules)))
-
-(defn build-count
-	"Count the number of new rules for a given controllerId"
-	[rules controllerId]
-	{
-		:notification "newRules"
-	 	:quantity (count (filter #(= controllerId (:controllerId %)) rules))
-	}
-)
-
-(defn- notify-new-rules
-	"Notification sent via web socket from server to controller with new rules accepted by the user
-	and the rules inserted by the user."
-	[rules]
-	(let [list-of-ids (list-controller-ids rules)]
-		(map 
-			#(handler/send-websocket-notification! % (build-count rules %))
-			list-of-ids
-		)
-	)
-)
 
 
 ;;##Public functions
@@ -52,7 +25,10 @@
 		(if (every? true? (map #(and (contains? % :nodeId) (contains? % :commandId) (contains? % :controllerId)  (contains? % :value) (contains? % :clauses)) rules))
 				(if (every? true? 
 					(map  #(db/insert? (coll-name houseId) (assoc % :accepted 1)) rules))
-					{:status 200}
+					(if (notification/notify-new-rules rules)
+						{:status 200}
+						{:status 410 :errorMessage "WebSocket channel not found."}
+					)
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}
@@ -118,4 +94,4 @@
 (defn notify-learnt-rules
 	"Send a notification to user's device with new learnt rules."
 	[houseId tokens msg]
-	(utils/send-notification (tokens houseId) msg))
+	(notification/send-notification (tokens houseId) msg))

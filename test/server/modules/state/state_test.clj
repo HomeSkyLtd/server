@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [server.modules.state.state :as state]
             [server.db :as db]
-            [server.utils :as utils]
+            [server.notification :as notification]
             (monger [db :as md] [collection :as mc])))
 
 (deftest test-app
@@ -139,8 +139,8 @@
           tokens {1 #{token1} 2 #{token2}}
           response (state/notify-action-result houseId tokens "New action")]
       (is true? response)
-      (doall (map #(is (= (:status %) 200)) @utils/thread-pool))
-      (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @utils/thread-pool))
+      (doall (map #(is (= (:status %) 200)) @notification/thread-pool))
+      (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @notification/thread-pool))
     )
   )
 )
