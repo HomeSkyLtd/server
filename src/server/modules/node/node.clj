@@ -2,7 +2,7 @@
     (:require [server.db :as db]
               (monger [core :as mg] [result :as res])
               [validateur.validation :refer :all]
-              [server.utils :as utils])
+              [server.notification :as notification])
     )
 
 ;

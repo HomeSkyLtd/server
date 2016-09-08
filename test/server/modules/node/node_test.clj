@@ -2,7 +2,7 @@
   (:use [clojure.test])
   (:use [server.modules.node.node])
   (:require [server.db :as db]
-            [server.utils :as utils])
+            [server.notification :as notification])
   )
 
 ;
@@ -196,5 +196,5 @@
               tokens {houseId #{token1 token2}}
               response (notify-detected-nodes houseId tokens "New nodes")]
         (is true? response)
-        (doall (map #(is (= (:status %) 200)) @utils/thread-pool))
-        (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @utils/thread-pool)))))
+        (doall (map #(is (= (:status %) 200)) @notification/thread-pool))
+        (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @notification/thread-pool)))))

@@ -105,3 +105,17 @@
 		)
 	)
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;							NODE MODULE FUNCTIONS							;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn notify-accepted-node
+	"Send a notification from server to controller with a new node accepted by the user"
+	[obj]
+	(let [msg {
+				:notification "acceptedNode"
+				:nodeId (:nodeId obj)
+				:accept (:accept obj)
+			}]
+		))
