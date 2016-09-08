@@ -45,6 +45,10 @@
                 {:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}))))
 
 
+
+
+
+
   (testing "select filterom db"
     (let [houseId 1 obj {:status 200 
                          :rules [{:accepted 1
@@ -56,14 +60,25 @@
       (is (= (rule/get-rules {} houseId nil) obj))))
 
 
+
+
+
+
+
+
+
   (testing "select learnt rules from db"
     (let [houseId 1 obj {:status 200 
-                         :rules [{:accepted 0 
-                                  :nodeId 2 
+                         :rules [{:command {
+                                    :nodeId 2
+                                    :commandId 1
+                                    :value 1
+                                   }
                                   :controllerId 1
-                                  :commandId 1 
-                                  :value 1 
-                                  :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]}]}]
+                                  :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]
+                                  }
+                                ]
+                        }]
       (is (= (rule/get-learnt-rules {} houseId nil) obj))))
 
 
@@ -77,10 +92,20 @@
       (doall (map #(is (= (:status %) 200)) @utils/thread-pool))
       (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @utils/thread-pool))))
 
+
+
+
+
+
     (testing "accepting rule"
       (let [houseId 1 obj {:nodeId 2 :controllerId 1 :commandId 1 :value 1}]
         (rule/accept-rule obj houseId nil)
         (is (= (dissoc (mc/find-one-as-map db/db coll-name obj) :_id) (assoc obj :accepted 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}])))))
+
+
+
+
+
 
     (testing "remove rule"
       (let [houseId 1
