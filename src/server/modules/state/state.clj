@@ -3,15 +3,14 @@
 		[server.db :as db]
 		[monger.operators :refer :all]
 		[clojure.data.json :as json]
-		[server.utils :as utils]
-		[server.handler :as handler]))
+		[server.utils :as utils]))
 
 (def ^:private last_states_coll "last_states")
 
 (defn- notify-new-action
 	"Send a notification of new action of a user from server to controller."
 	[action]
-	(let [controllerId (:controllerId obj) 
+	(let [controllerId (:controllerId action) 
 		  msg {:notification newAction :action (dissoc action :controllerId)}]
 		(handler/send-websocket-notification! controllerId msg)))
 

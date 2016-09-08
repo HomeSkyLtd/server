@@ -118,4 +118,51 @@
             obj {:nodeId 3 :controllerId 1 :commandId 1 :value 1}]
             (is (= (rule/remove-rule obj houseId nil) {:status 400 :errorMessage "DB does not contain obj."}))
             (is (empty? (db/select coll-name obj)))))
+
+
+
+
+
+
+
+
+
+
+    (testing "auxiliar functions to count number of new rules"
+      (let [rules 
+              [{:controllerId 1
+                :nodeId 1
+                :commandId 1
+                :value 1
+                :clauses [{:lhs "1.1" :operator "==" :rhs 0}]
+              },
+              {
+                :controllerId 2
+                :nodeId 1
+                :commandId 1
+                :value 1
+                :clauses [{:lhs "1.1" :operator "==" :rhs 0}]
+              },
+              {
+                :controllerId 1
+                :nodeId 2
+                :commandId 1
+                :value 1
+                :clauses [{:lhs "1.1" :operator "==" :rhs 0}]
+              },
+              {
+                :controllerId 3
+                :nodeId 1
+                :commandId 1
+                :value 1
+                :clauses [{:lhs "1.1" :operator "==" :rhs 0}]
+              }]
+            ]
+
+          (is (= '(1 2 3) (rule/list-controller-ids rules)))
+          (is (= {:notification "newRules" :quantity 2} (rule/build-count rules 1)))
+          (is (= {:notification "newRules" :quantity 1} (rule/build-count rules 2)))
+          (is (= {:notification "newRules" :quantity 1} (rule/build-count rules 3)))))
+    
+
     )

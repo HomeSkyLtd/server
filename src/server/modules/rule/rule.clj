@@ -13,6 +13,34 @@
 	"Return the collection name for a specific house."
 	[houseId] (str "rules_" houseId))
 
+;;Auxiliar functions to count the number of new rules per controller
+
+(defn list-controller-ids
+	"Return a list of distinct controller ids"
+	[rules]
+	(distinct (map #(:controllerId %) rules)))
+
+(defn build-count
+	"Count the number of new rules for a given controllerId"
+	[rules controllerId]
+	{
+		:notification "newRules"
+	 	:quantity (count (filter #(= controllerId (:controllerId %)) rules))
+	}
+)
+
+(defn- notify-new-rules
+	"Notification sent via web socket from server to controller with new rules accepted by the user
+	and the rules inserted by the user."
+	[rules]
+	(let [list-of-ids (list-controller-ids rules)]
+		(map 
+			#(handler/send-websocket-notification! % (build-count rules %))
+			list-of-ids
+		)
+	)
+)
+
 
 ;;##Public functions
 
