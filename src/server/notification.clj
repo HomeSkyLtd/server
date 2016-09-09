@@ -72,12 +72,13 @@
 	[controller-id message]
 	(let [channel (@agent-channel controller-id)]
 		(if (nil? channel)
-			(do 
-				(if (contains? @pending-ws-notifications controller-id)
+			(if (contains? @pending-ws-notifications controller-id)
+				(and 
 					(swap! pending-ws-notifications assoc controller-id (conj (@pending-ws-notifications controller-id) message))
+					false)
+				(and
 					(swap! pending-ws-notifications assoc controller-id (list message))
-				)
-				false
+					false)
 			)
 			(if (map? message)
 				(kit/send! channel (json/write-str message))
@@ -182,6 +183,18 @@
 	Send a notification from server to controller with a new node accepted by the user"
 	[obj]
 	(let [msg {:notification "acceptedNode" :nodeId (:nodeId obj) :accept (:accept obj)}]
+		(if (send-websocket-notification! (:controllerId obj) msg)
+			{:status 200 }
+			{:status 410 :errorMessage "WebSocket channel not found."}
+		)
+	)
+)
+
+(defn notify-removed-node
+	"Server -> Controller
+	Notify the controller that a node was removed by the user throgh the app."
+	[obj]
+	(let [msg {:notification "removedNode" :nodeId (:nodeId obj)}]
 		(if (send-websocket-notification! (:controllerId obj) msg)
 			{:status 200 }
 			{:status 410 :errorMessage "WebSocket channel not found."}

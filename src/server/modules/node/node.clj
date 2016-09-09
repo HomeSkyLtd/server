@@ -58,10 +58,8 @@
                     ;Check if node already exists
                     (if (not-any? #(node-exists? house-id controller-id (:nodeId %)) nodes)
                         (if (db/insert? (str "node_" house-id) 
-                        (map #(assoc % :controllerId controller-id :accepted 0 :alive 1) nodes))
-                            (if (notification/notify-detected-nodes house-id nodes)
-                                {:status 200}
-                                {:status 500 :errorMessage "Thread pool error."})
+                                (map #(assoc % :controllerId controller-id :accepted 0 :alive 1) nodes))
+                            (notification/notify-detected-nodes house-id nodes)
                             {:status 500 :errorMessage "Database error: Couldn't insert"}
                         )
                         {:status 400 :errorMessage "Some node is already in the database" }
@@ -69,8 +67,7 @@
                     {:status 400 :errorMessage (error-message [valid-nodes]) }
                 )
             )
-            {:status 400 :errorMessage (error-message valid) }
-            )))
+            {:status 400 :errorMessage (error-message valid)})))
 
 
 (defn set-node-extra
@@ -136,9 +133,8 @@
                     (if (= (:accepted node) 0)
                         {:status 400 :errorMessage "Tried to remove non accepted node"}
                         (if (db/remove? (str "node_" house-id) (select-keys obj [:controllerId :nodeId]))
-                            ;TODO: Notify controller
+                            (notification/notify-removed-node obj)
                             ;TODO: Remove node state
-                            {:status 200 }
                             {:status 500 :errorMessage "Database error: Couldn't accept node" }))))
             {:status 400 :errorMessage (error-message valid)})))
 

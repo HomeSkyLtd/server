@@ -12,14 +12,12 @@
 ; HELPER FUNCTIONS FOR HANDLERS
 (defn- valid-username-password? 
     [obj]
-    (if (or
+    (not (or
             (nil? (:username obj))
             (nil? (:password obj))
             (empty? (:username obj))
             (empty? (:password obj))
         )
-        false
-        true
     )
 )
 
@@ -123,10 +121,9 @@
     (try-let [controller (db/select "agent" {:_id (ObjectId. (obj :controllerId))})]
         (if (empty? controller)
             {:status 400, :errorMessage "invalid controller specified"}
-            (do
-                (db/update "agent" {:_id (ObjectId. (obj :controllerId))}
-                    :set {"houseId" house-id})
+            (if (db/update? "agent" {:_id (ObjectId. (obj :controllerId))} :set {"houseId" house-id})
                 {:status 200}
+                {:status 500 :errorMessage "DB did not update value."}
             )
         )
         (catch IllegalArgumentException e {:status 400, :errorMessage "invalid controller specified"})
