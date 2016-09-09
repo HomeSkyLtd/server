@@ -24,9 +24,6 @@
 ; keeps session data
 (def session-storage (atom {}))
 
-; keeps token per user
-(def tokens (atom {}))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLER CALLBACK FUNCTIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -161,22 +158,22 @@
 					
 					; Handle token creation / destruction
 					(if (not (nil? (first (vals token))))
-						(if (contains? @tokens (first (keys token)))
-							(swap! tokens assoc 
+						(if (contains? @notification/tokens (first (keys token)))
+							(swap! notification/tokens assoc 
 								(first (keys token)) 
-								(conj (@tokens (first (keys token))) (first (vals token)))
+								(conj (@notification/tokens (first (keys token))) (first (vals token)))
 							)
-							(swap! tokens assoc
+							(swap! notification/tokens assoc
 								(first (keys token))
 								#{(first (vals token))}
 							)
 						)
 					)
 					(if (not (nil? kill-token))
-						(if (contains? @tokens (first (keys kill-token)))
-							(swap! tokens assoc 
+						(if (contains? @notification/tokens (first (keys kill-token)))
+							(swap! notification/tokens assoc 
 								(first (keys kill-token)) 
-								(disj (@tokens (first (keys kill-token))) (first (vals kill-token)))
+								(disj (@notification/tokens (first (keys kill-token))) (first (vals kill-token)))
 							)
 							(println "Warning: trying to delete inexisting token")
 						)

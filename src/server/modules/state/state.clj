@@ -12,7 +12,7 @@
 	[obj houseId controllerId]
 	(if-not (nil? houseId)
 		(if-let [data (obj :data)]
-			(if (every? true? (map #(and (contains? % :nodeId) (contains? % :dataId) (contains? % :value) (contains? % :timestamp)) data))
+			(if (every? true? (map #(every? % [:nodeId :dataId :value :timestamp]) data))
 				(if (and
 						(every? true? (map #(db/insert? (str "all_states_" houseId) (assoc % :controllerId controllerId)) data))
 						(every? true? 
@@ -81,10 +81,7 @@
 									{:controllerId (:controllerId action) :nodeId (:nodeId action)}
 									 :set {(keyword (str "command." (:commandId action))) (:value action)}
 									 :upsert true))
-					(if (notification/notify-new-action action)
-						{:status 200}
-						{:status 410 :errorMessage "WebSocket channel not found."}
-					)
+					(notification/notify-new-action action)
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, commandId and value."}
@@ -105,7 +102,8 @@
 	}
 )
 
-(defn notify-action-result
-	"Send a notification to user's device with new action detected."
-	[houseId tokens msg]
-	(notification/send-notification (tokens houseId) msg))
+(defn send-action-result
+	"Receive the result of an action (done or couldn't be done) from the controller"
+	[obj houseId _]
+	(notification/notify-action-result obj houseId)
+)

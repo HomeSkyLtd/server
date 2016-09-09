@@ -4,7 +4,7 @@
 			  [clojure.data.json :as json]))
 
 ;;
-;; Keeps track of active websockets channels
+;; Keeps track of active websockets channels.
 ;;
 (def agent-channel (atom {}))
 
@@ -13,7 +13,10 @@
 ;;
 (def thread-pool (agent '()))
 
-
+;;
+;; Keeps token per user's device.
+;;
+(def tokens (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 								PRIVATE FUNCTIONS							;;
@@ -25,19 +28,16 @@
 
 (defn- send-on-thread
 	"Send a notification in one of the threads of the pool."
-	[tokens msg]
+	[house-tokens msg]
 	(let [auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"]
 		(map #(client/post "https://fcm.googleapis.com/fcm/send"
 			{:body (build-msg % msg)
 			 :headers {"Authorization" auth-key "Content-Type" "application/json"}
-			}) tokens
+			}) house-tokens
 		)
 	)
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 								PUBLIC FUNCTIONS							;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- send-websocket-notification!
 	"Sends message to controller-id through a websockets channel. Returns true
 	 if successful, and false otherwise."
@@ -54,10 +54,18 @@
 	)
 )
 
-(defn send-notification
+(defn- send-notification
 	"Send notifications in a pool of threads."
-	[tokens msg]
-	(await-for 1000 (send thread-pool concat (send-on-thread tokens msg))))
+	[houseId msg]
+	(let [house-tokens (@tokens houseId)]
+		(await-for 1000 (send thread-pool concat (send-on-thread house-tokens msg)))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 								PUBLIC FUNCTIONS							;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,11 +73,35 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn notify-new-action
-	"Send a notification of new action of a user from server to controller."
+	"Server -> Controller
+	Send a notification of new action of a user from server to controller."
 	[action]
 	(let [controllerId (:controllerId action) 
 		  msg {:notification "newAction" :action (dissoc action :controllerId)}]
-		(send-websocket-notification! controllerId msg)))
+		(if (send-websocket-notification! controllerId msg)
+			{:status 200}
+			{:status 410 :errorMessage "WebSocket channel not found."}
+		)
+	)
+)
+
+(defn notify-action-result
+	"Server -> App
+	Send a notification to user's device with the confirmation of an action done."
+	[action-result houseId]
+	(if (every? action-result [:result :action])
+		(let   [result (if (= (:result action-result) 1) "Success" "Failed")
+			  	value  (:value (:action action-result))
+			  	nodeId (:nodeId (:action action-result))
+			  	msg (str result " to send value " value " to node " nodeId)]
+			(if (send-notification houseId msg)
+				{:status 200}
+				{:status 500 :errorMessage "Thread pool couldn't handle."}
+			)
+		)
+		{:status 400 :errorMessage "Not found the keys result or action"}
+	)
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;							RULE MODULE FUNCTIONS							;;
@@ -93,16 +125,25 @@
 )
 
 (defn notify-new-rules
-	"Notification sent via web socket from server to controller with new rules accepted by the user
+	"Server -> Controller
+	Notification sent via web socket from server to controller with new rules accepted by the user
 	and the rules inserted by the user."
 	[rules]
 	(let [list-of-ids (list-controller-ids rules)]
-		(every? true? 
-			(map 
-				#(send-websocket-notification! % (build-count rules %))
-				list-of-ids
-			)
+		(if (every? true? (map #(send-websocket-notification! % (build-count rules %)) list-of-ids))
+			{:status 200}
+			{:status 410 :errorMessage "WebSocket channel not found."}
 		)
+	)
+)
+
+(defn notify-learnt-rules
+	"Server -> App
+	Send a notification to user's device with new learnt rules."
+	[houseId rules]
+	(if (send-notification houseId (str "New detected rules: " (count rules)))
+		{:status 200}
+		{:status 500 :errorMessage "Thread pool couldn't handle."}
 	)
 )
 
@@ -111,11 +152,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn notify-accepted-node
-	"Send a notification from server to controller with a new node accepted by the user"
+	"Server -> Controller
+	Send a notification from server to controller with a new node accepted by the user"
 	[obj]
-	(let [msg {
-				:notification "acceptedNode"
-				:nodeId (:nodeId obj)
-				:accept (:accept obj)
-			}]
-		))
+	(let [msg {:notification "acceptedNode" :nodeId (:nodeId obj) :accept (:accept obj)}]
+		(if (send-websocket-notification! (:controllerId obj) msg)
+			{:status 200 }
+			{:status 410 :errorMessage "WebSocket channel not found."}
+		)
+	)
+)
+
+(defn notify-detected-nodes
+    "Server -> App
+    Send a notification to user's device with how many new detected nodes."
+    [houseId nodes]
+    (if (send-notification houseId (str "New detected nodes: " (count nodes)))
+    	{:status 200}
+		{:status 500 :errorMessage "Thread pool couldn't handle."}
+	)
+)

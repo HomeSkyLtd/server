@@ -22,13 +22,9 @@
 	so are already accepted by the user."
 	[obj houseId agentId]
 	(if-let [rules (:rules obj)]
-		(if (every? true? (map #(and (contains? % :nodeId) (contains? % :commandId) (contains? % :controllerId)  (contains? % :value) (contains? % :clauses)) rules))
-				(if (every? true? 
-					(map  #(db/insert? (coll-name houseId) (assoc % :accepted 1)) rules))
-					(if (notification/notify-new-rules rules)
-						{:status 200}
-						{:status 410 :errorMessage "WebSocket channel not found."}
-					)
+		(if (every? true? (map #(every? % [:nodeId :commandId :controllerId :value :clauses]) rules))
+				(if (every? true? (map  #(db/insert? (coll-name houseId) (assoc % :accepted 1)) rules))
+					(notification/notify-new-rules rules)
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}
@@ -86,12 +82,3 @@
 		)
 	)
 )
-
-;;
-;;##Notification functions
-;;
-
-(defn notify-learnt-rules
-	"Send a notification to user's device with new learnt rules."
-	[houseId tokens msg]
-	(notification/send-notification (tokens houseId) msg))

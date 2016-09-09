@@ -35,8 +35,8 @@
 (defn- error-message
     "Transforms an error-map into a string of the error"
     [error-map]
-        (str (first (first (vals (last error-map)))) ": " (subs (str (first (keys (last error-map)))) 1))
-    )
+        (str (first (first (vals (last error-map)))) ": " (subs (str (first (keys (last error-map)))) 1)))
+
 
 
 
@@ -58,9 +58,9 @@
                     (if (not-any? #(node-exists? house-id controller-id (:nodeId %)) nodes)
                         (if (db/insert? (str "node_" house-id) 
                         (map #(assoc % :controllerId controller-id :accepted 0 :alive 1) nodes))
-                            ; TODO: Notify users of detected nodes
-                            {:status 200}
-                            ; Return error
+                            (if (notification/notify-detected-nodes house-id nodes)
+                                {:status 200}
+                                {:status 500 :errorMessage "Thread pool error."})
                             {:status 500 :errorMessage "Database error: Couldn't insert"}
                         )
                         {:status 400 :errorMessage "Some node is already in the database" }
@@ -83,9 +83,8 @@
             (let [node (get-node house-id (:controllerId obj) (:nodeId obj))]
                 (if (nil? node)
                     {:status 400 :errorMessage "Tried to set extra of non existent node" }
-                    (if (res/acknowledged? 
-                    (db/update (str "node_" house-id) (select-keys obj [:controllerId :nodeId]) 
-                    :set (into {} (map #(conj {} [(keyword (str "extra." (subs (str (get % 0)) 1))) (get % 1)]) (:extra obj)))))
+                    (if (db/update? (str "node_" house-id) (select-keys obj [:controllerId :nodeId])
+                    :set (into {} (map #(conj {} [(keyword (str "extra." (subs (str (get % 0)) 1))) (get % 1)]) (:extra obj))))
                         {:status 200 }
                         {:status 400 :errorMessage "Database error: Couldn't set node extra"})))
                 
@@ -113,11 +112,10 @@
                 (if (nil? node)
                     {:status 400 :errorMessage "Tried to accept non existent node"}
                     (if (= (:accepted node) 0)
-                        (if (res/acknowledged? (if (= (:accept obj) 1)
-                                (db/update (str "node_" house-id) (select-keys obj [:controllerId :nodeId]) :set {:accepted 1})
-                                (db/remove (str "node_" house-id) (select-keys obj [:controllerId :nodeId]))))
-                            ;Notify controller
-                            {:status 200 }
+                        (if (if (= (:accept obj) 1)
+                                (db/update? (str "node_" house-id) (select-keys obj [:controllerId :nodeId]) :set {:accepted 1})
+                                (db/remove? (str "node_" house-id) (select-keys obj [:controllerId :nodeId])))
+                            (notification/notify-accepted-node obj)
                             {:status 500 :errorMessage "Database error: Couldn't accept node" })
                         {:status 400 :errorMessage "Tried to accept accepted node" })))
             {:status 400 :errorMessage (error-message valid)})))
@@ -136,8 +134,7 @@
                     {:status 400 :errorMessage "Tried to remove non existent node"}
                     (if (= (:accepted node) 0)
                         {:status 400 :errorMessage "Tried to remove non accepted node"}
-                        (if (res/acknowledged?
-                                (db/remove (str "node_" house-id) (select-keys obj [:controllerId :nodeId])))
+                        (if (db/remove? (str "node_" house-id) (select-keys obj [:controllerId :nodeId]))
                             ;TODO: Notify controller
                             ;TODO: Remove node state
                             {:status 200 }
@@ -156,14 +153,8 @@
             (let [node (get-node house-id controller-id (:nodeId obj))]
                 (if (nil? node)
                     {:status 400 :errorMessage "Tried to change state of non existent node"}
-                    (if (res/acknowledged?
-                        (db/update (str "node_" house-id) 
-                            (select-keys obj [:controllerId :nodeId]) :set {:alive (:alive obj)}))
+                    (if (db/update? (str "node_" house-id)
+                            (select-keys obj [:controllerId :nodeId]) :set {:alive (:alive obj)})
                         {:status 200 }
                         {:status 500 :errorMessage "Database error: Couldn't set node state" })))
             {:status 400 :errorMessage (error-message valid)})))
-
-
-(defn notify-detected-nodes [houseId tokens msg]
-    "Send a notification to user's device with new detected nodes."
-    (notification/send-notification (tokens houseId) msg))
