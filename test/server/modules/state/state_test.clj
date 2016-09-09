@@ -8,6 +8,10 @@
 (deftest test-app
 
   (md/drop-db db/db)
+  ;;
+  ;;  Initialize tokens in Notification
+  ;;
+  (notification/init-tokens)
 
   (testing "inserting new data ok"
     (let [obj {:data [
@@ -15,7 +19,7 @@
                     :dataId 1 
                     :value 13
                     :timestamp 1471531800}]} houseId 1 controllerId 1]
-      (is (= (state/new-data obj houseId controllerId) {:status 200}))))
+      (is (= 200 (:status (state/new-data obj houseId controllerId))))))
 
   (testing "inserting new data without houseId"
     (let [obj {:data [
@@ -48,7 +52,7 @@
                     :commandId 1 
                     :value 20 
                     :timestamp 1471531800}]} houseId 1 controllerId 1]
-      (is (= (state/new-command obj houseId controllerId) {:status 200}))))
+      (is (= 200 (:status (state/new-command obj houseId controllerId))))))
 
   (testing "inserting new command without houseId"
     (let [obj {:command [
@@ -81,7 +85,7 @@
                         :nodeId 3 
                         :commandId 1 
                         :value 20}}]
-      (is (= (state/new-action obj houseId agentId) {:status 200}))))
+      (is (= 200 (:status (state/new-action obj houseId agentId))))))
 
   (testing "inserting new action without houseId"
     (let [obj {:action {:nodeId 1 
@@ -113,7 +117,7 @@
                             {:nodeId 1 :dataId 2 :value 22 :timestamp 1471531802},
                             {:nodeId 2 :dataId 2 :value 201 :timestamp 1471531803}
                             ]}]
-      (is (= (state/new-data obj houseId controllerId) {:status 200}))))
+      (is (= 200 (:status (state/new-data obj houseId controllerId))))))
 
   (testing "get house state"
     (let [houseId 1 obj {:state [{:command {:1 20}, :controllerId 1, :data {:1 13}, :nodeId 3}
@@ -133,20 +137,4 @@
           obj {:result 1 :action {:nodeId 1 :commandId 1 :value 1}}]
       (is (= 200 (:status (state/send-action-result obj houseId nil))))))
 
-
-
-
-
-
-  #_(testing "sending request to FCM server."
-    (let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
-          token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
-          houseId 1
-          tokens {1 #{token1} 2 #{token2}}
-          response (state/notify-action-result houseId tokens "New action")]
-      (is true? response)
-      (doall (map #(is (= (:status %) 200)) @notification/thread-pool))
-      (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @notification/thread-pool))
-    )
-  )
 )

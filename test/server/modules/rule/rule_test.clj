@@ -9,6 +9,11 @@
 
 (deftest test-app
 
+  ;;
+  ;;  Initialize tokens in Notification
+  ;;
+  (notification/init-tokens)
+
   (md/drop-db db/db)
   (mc/insert db/db coll-name {:accepted 0 :nodeId 2 :controllerId 1 :commandId 1 :value 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]})
 
@@ -19,30 +24,27 @@
                         :value 20 
                         :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]} 
           houseId 1]
-      (is (= (rule/new-rules obj houseId nil) {:status 200}))))
+      (is (= 200 (:status (rule/new-rules obj houseId nil))))))
 
   (testing "new node without rules"
     (let [obj nil houseId 1]
-      (is (= (rule/new-rules obj houseId nil) {:status 400 :errorMessage "Rules not defined"}))))
+      (is (= 400 (:status (rule/new-rules obj houseId nil))))))
 
  
   (testing "new node without nodeId"
     (let [obj {:rules [{:controllerId 1 :commandId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
             houseId 1]
-      (is (= (rule/new-rules obj houseId nil) 
-                {:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}))))
+      (is (= 400 (:status (rule/new-rules obj houseId nil))))))
 
   (testing "new node without controllerId"
     (let [obj {:rules [{:nodeId 1 :commandId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
             houseId 1]
-      (is (= (rule/new-rules obj houseId nil) 
-                {:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}))))
+      (is (= 400 (:status (rule/new-rules obj houseId nil))))))
 
   (testing "new node without commandId"
     (let [obj {:rules [{:controllerId 1 :nodeId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
             houseId 1]
-      (is (= (rule/new-rules obj houseId nil) 
-                {:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}))))
+      (is (= 400 (:status (rule/new-rules obj houseId nil))))))
 
 
 
@@ -95,7 +97,7 @@
     (testing "remove rule"
       (let [houseId 1
             obj {:nodeId 2 :controllerId 1 :commandId 1 :value 1}]
-            (is (= (rule/remove-rule obj houseId nil) {:status 200}))
+            (is (= 200 (:status (rule/remove-rule obj houseId nil))))
             (is (empty? (db/select coll-name obj)))))
 
     (testing "try to remove rule that is not in DB"
