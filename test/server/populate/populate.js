@@ -11,11 +11,21 @@ MongoClient.connect(url, function(err, db) {
             if (err) throw err;
 
             var collection = db.collection('agent');
-            collection.insertOne({
-                username: 'admin1', 
-                password: 'AYag$/HXl9rALel8=$+CwAzkg5hbEhUHJS5Y3Qy+INyiI=', 
-                type: 'admin', 
-                houseId: '1'}, function(err, r) {
+            collection.insertMany(
+                [
+                    {
+                        username: 'admin1', 
+                        password: 'AYag$/HXl9rALel8=$+CwAzkg5hbEhUHJS5Y3Qy+INyiI=', 
+                        type: 'admin', 
+                        houseId: '1'
+                    },
+                    {
+                        username: 'controller1', 
+                        password: 'AYag$/HXl9rALel8=$+CwAzkg5hbEhUHJS5Y3Qy+INyiI=', 
+                        type: 'controller', 
+                        houseId: '1'
+                    }
+                ], function(err, r) {
                     if (err) throw err;
 
                     collection = db.collection('rules_1');
