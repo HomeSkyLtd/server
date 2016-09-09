@@ -18,31 +18,60 @@
 ;;
 (def tokens (atom {}))
 
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;															;;
+;;				 DEVELOPMENT TEST FUNCTIONS                 ;;
+;;															;;
+;;;;;;;;;These fuctions will be removed in production;;;;;;;;;
+;;															;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn init-tokens
+	"Initialize tokens for the developers' devices' tokens"
+	[]
+	(let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
+		  token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
+		  house-tokens {1 #{token1 token2}}]
+		(swap! tokens merge house-tokens)))
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 								PRIVATE FUNCTIONS							;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- build-msg
 	"Build message to be sent as notification to smartphone."
 	[token msg]
-	(str "{\"notification\": {\"body\":\"" msg "\"},\"to\":\"" token "\"}"))
+	(json/write-str {:notification {:body msg} :to token})
+)
 
 (defn- send-on-thread
 	"Send a notification in one of the threads of the pool."
 	[house-tokens msg]
-	(let [auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"]
-		(map #(client/post "https://fcm.googleapis.com/fcm/send"
-			{:body (build-msg % msg)
-			 :headers {"Authorization" auth-key "Content-Type" "application/json"}
-			}) house-tokens
-		)
+	(let [auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"
+		  url "https://fcm.googleapis.com/fcm/send"
+		  headers {"Authorization" auth-key "Content-Type" "application/json"}]
+		(doall (map #(client/post url {:body (build-msg % msg) :headers headers}) house-tokens))
 	)
 )
+
+(defn- send-notification
+	"Send notifications in a pool of threads."
+	[houseId msg]
+	(let [house-tokens (@tokens houseId)]
+		(if (await-for 1000 (send thread-pool concat (send-on-thread house-tokens msg)))
+			(nil? (agent-error thread-pool))
+			false)))
+
 
 (defn- send-websocket-notification!
 	"Sends message to controller-id through a websockets channel. Returns true
 	 if successful, and false otherwise."
 	[controller-id message]
-	;(println @agent-channel)
 	(let [channel (@agent-channel controller-id)]
 		(if (nil? channel)
 			false
@@ -53,13 +82,6 @@
 		)
 	)
 )
-
-(defn- send-notification
-	"Send notifications in a pool of threads."
-	[houseId msg]
-	(let [house-tokens (@tokens houseId)]
-		(await-for 1000 (send thread-pool concat (send-on-thread house-tokens msg)))))
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

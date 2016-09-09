@@ -20,6 +20,11 @@
 
 (use-fixtures :once create-destroy-coll)
 
+;;
+;;  Initialize tokens in Notification
+;;
+(notification/init-tokens)
+
 
 ; All test functions use house-id 0
 

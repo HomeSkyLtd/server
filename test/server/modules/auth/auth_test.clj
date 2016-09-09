@@ -62,6 +62,7 @@
 
 (deftest test-handler-functions
     (setup-database-test-handler)
+    (swap! notification/tokens {})
 
     (testing "unauthorized - not logged in"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")

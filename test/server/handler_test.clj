@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [ring.mock.request :as mock]
             [clojure.data.json :as json]
-            [server.handler :refer :all]))
+            [server.handler :refer :all]
+            [server.notification :as notification :only [tokens]]))
 
 (deftest test-app
 
