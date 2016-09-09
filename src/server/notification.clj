@@ -7,6 +7,9 @@
 (def ^{:doc "Atom that keeps track of active websockets channels."} 
 	agent-channel (atom {}))
 
+(def ^{:doc "Keeps track of pending notifications to controllers."}
+	pending-ws-notifications (atom {}))
+
 (def ^{:doc "Agent that is a pool of threads for non blocking send of notifications to app."} 
 	thread-pool (agent '()))
 
@@ -69,7 +72,13 @@
 	[controller-id message]
 	(let [channel (@agent-channel controller-id)]
 		(if (nil? channel)
-			false
+			(do 
+				(if (contains? @pending-ws-notifications controller-id)
+					(swap! pending-ws-notifications assoc controller-id (conj (@pending-ws-notifications controller-id) message))
+					(swap! pending-ws-notifications assoc controller-id (list message))
+				)
+				false
+			)
 			(if (map? message)
 				(kit/send! channel (json/write-str message))
 				(kit/send! channel message)
@@ -187,5 +196,19 @@
     (if (send-notification houseId (str "New detected nodes: " (count nodes)))
     	{:status 200}
 		{:status 500 :errorMessage "Thread pool couldn't handle."}
+	)
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;							   HELPER  FUNCTIONS							;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn send-pending-notifications! [controller-id]
+	(if (not (empty? (@pending-ws-notifications controller-id)))
+		(let [messages (@pending-ws-notifications controller-id)]
+			(swap! pending-ws-notifications dissoc controller-id)
+			(doseq [message messages]
+				(send-websocket-notification! controller-id message)
+			)
+		)
 	)
 )

@@ -33,8 +33,7 @@
 	[_ _ _] {:status 200})
 
 
-(def ^:private 
-	 ^{:doc "Map of functions to their names."}
+(def ^:private ^{:doc "Map of functions to their names."}
 	function-handlers {
 		"newData" state/new-data,
 		"newCommand" state/new-command,
@@ -79,8 +78,7 @@
 		"admin" 8
 	})
 
-(def ^:private 
-	 ^{:doc "List of permissions to access each function."}
+(def ^:private ^{:doc "List of permissions to access each function."}
 	function-permissions {
 		"newData" (permissions "controller"),
 		"newCommand" (permissions "controller"),
@@ -205,8 +203,8 @@
 	(let
 		[
 			session (:session request)
-			houseId (:houseId session)
-			agentId (:agentId session)
+			house-id (:houseId session)
+			agent-id (:agentId session)
 			permission (bit-or (permissions "base") (get-session-permission session))
 		]
 		;If not authorized due to mismatched authorization
@@ -216,10 +214,14 @@
 				{:status 403 :headers {"X-WebSocket-Reject-Reason" "Unauthorized operation"}}
 			)
 			(kit/with-channel request channel
-				(swap! notification/agent-channel assoc agentId channel)
+				(swap! notification/agent-channel assoc agent-id channel)
 				(println "Received websockets call")
 				(println (str "active channels: " (count @notification/agent-channel)))
 				(println @notification/agent-channel)
+
+				;Send pending notifications, if any
+				(notification/send-pending-notifications! agent-id)
+
 				(kit/on-close channel (fn [status]
 					(swap! notification/agent-channel dissoc (first (utils/find-keys @notification/agent-channel channel)))
 					(println "channel closed: " status)
