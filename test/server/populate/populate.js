@@ -21,18 +21,22 @@ MongoClient.connect(url, function(err, db) {
                     collection = db.collection('rules_1');
                     collection.insertMany([
                         {
-                            nodeId: 1,
+                            command:{
+                                nodeId: 1,
+                                commandId: 1,
+                                value: 20
+                            },
                             controllerId: "1",
-                            commandId: 1,
-                            value: 20,
                             clauses: [[{lhs: '1.1', operator: '>', rhs: 10}]],
                             accepted: 1
                         }, 
                         {
-                            nodeId: 2,
+                            command:{
+                                nodeId: 2,
+                                commandId: 1,
+                                value: 0,
+                            },
                             controllerId: "1",
-                            commandId: 1,
-                            value: 0,
                             clauses: [[{lhs: '2.1', operator: '==', rhs: 0}]],
                             accepted: 0
                         }], 
