@@ -1,4 +1,5 @@
-(ns server.handler
+(ns ^{:doc "Receive requests and call all modules' functions"}
+	server.handler
 	(:require
 		[server.utils :as utils]
 		[compojure.core :refer :all]
@@ -21,53 +22,56 @@
 ;; STATE REFERENCES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; keeps session data
-(def session-storage (atom {}))
+(def ^{:doc "Keeps session data"} session-storage (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLER CALLBACK FUNCTIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Test handler - returns status 200
-(defn test-handler [_ _ _] {:status 200})
+(defn test-handler 
+	"Test handler - returns status 200"
+	[_ _ _] {:status 200})
 
 
-(def ^:private function-handlers {
-	"newData" state/new-data,
-	"newCommand" state/new-command,
-	"newAction" state/new-action,
-	"getHouseState" state/get-house-state,
+(def ^:private 
+	 ^{:doc "Map of functions to their names."}
+	function-handlers {
+		"newData" state/new-data,
+		"newCommand" state/new-command,
+		"newAction" state/new-action,
+		"getHouseState" state/get-house-state,
 
-	"newRules" rule/new-rules,
-	"getRules" rule/get-rules,
-	"getLearntRules" rule/get-learnt-rules,
+		"newRules" rule/new-rules,
+		"getRules" rule/get-rules,
+		"getLearntRules" rule/get-learnt-rules,
 
-	"newDetectedNodes" node/new-detected-nodes,
-	"setNodeExtra" node/set-node-extra,
-	"getNodesInfo" node/get-nodes-info,
-	"acceptNode" node/accept-node,
-    "removeNode" node/remove-node,
-	"setNodeState" node/set-node-state,
+		"newDetectedNodes" node/new-detected-nodes,
+		"setNodeExtra" node/set-node-extra,
+		"getNodesInfo" node/get-nodes-info,
+		"acceptNode" node/accept-node,
+	    "removeNode" node/remove-node,
+		"setNodeState" node/set-node-state,
 
-	"login" auth/login,
-	"logout" auth/logout,
-	"newUser" auth/new-user,
-	"newAdmin" auth/new-admin,
-	"registerController" auth/register-controller,
-	"setToken" auth/set-token,
+		"login" auth/login,
+		"logout" auth/logout,
+		"newUser" auth/new-user,
+		"newAdmin" auth/new-admin,
+		"registerController" auth/register-controller,
+		"setToken" auth/set-token,
 
-	"testBase" test-handler,
-	"testUser" test-handler,
-	"testAdmin" test-handler,
-	"testController" test-handler
+		"testBase" test-handler,
+		"testUser" test-handler,
+		"testAdmin" test-handler,
+		"testController" test-handler
 	})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLER CALLBACK FUNCTIONS - PERMISSIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Granting base permission to a function means anyone can access it
-(def permissions
+
+(def ^{:doc "Granting base permission to a function means anyone can access it"}
+	permissions
 	{
 		"base" 1,
 		"user" 2,
@@ -75,34 +79,36 @@
 		"admin" 8
 	})
 
-(def ^:private function-permissions {
-	"newData" (permissions "controller"),
-	"newCommand" (permissions "controller"),
-	"newAction" (bit-or (permissions "user") (permissions "admin")),
-	"getHouseState" (bit-or (permissions "user") (permissions "admin")),
+(def ^:private 
+	 ^{:doc "List of permissions to access each function."}
+	function-permissions {
+		"newData" (permissions "controller"),
+		"newCommand" (permissions "controller"),
+		"newAction" (bit-or (permissions "user") (permissions "admin")),
+		"getHouseState" (bit-or (permissions "user") (permissions "admin")),
 
-	"newRules" (bit-or (permissions "admin") (permissions "user")),
-	"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
-	"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
+		"newRules" (bit-or (permissions "admin") (permissions "user")),
+		"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
+		"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
 
-	"newDetectedNodes" (permissions "controller"),
-	"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
-	"getNodesInfo" (bit-or (permissions "user") (permissions "admin")),
-	"acceptNode" (bit-or (permissions "user") (permissions "admin")),
-	"removeNode" (bit-or (permissions "user") (permissions "admin")),
-    "setNodeState" (permissions "controller"),
+		"newDetectedNodes" (permissions "controller"),
+		"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
+		"getNodesInfo" (bit-or (permissions "user") (permissions "admin")),
+		"acceptNode" (bit-or (permissions "user") (permissions "admin")),
+		"removeNode" (bit-or (permissions "user") (permissions "admin")),
+	    "setNodeState" (permissions "controller"),
 
-	"login" (permissions "base"),
-	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
-	"newUser" (permissions "admin"),
-	"newAdmin" (permissions "base"),
-	"registerController" (permissions "admin"),
-	"setToken" (bit-or (permissions "admin") (permissions "user")),
+		"login" (permissions "base"),
+		"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
+		"newUser" (permissions "admin"),
+		"newAdmin" (permissions "base"),
+		"registerController" (permissions "admin"),
+		"setToken" (bit-or (permissions "admin") (permissions "user")),
 
-	"testBase" (permissions "base"),
-	"testUser" (permissions "user"),
-	"testAdmin" (permissions "admin"),
-	"testController" (permissions "controller")
+		"testBase" (permissions "base"),
+		"testUser" (permissions "user"),
+		"testAdmin" (permissions "admin"),
+		"testController" (permissions "controller")
 	})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -121,7 +127,9 @@
 		(build-response-json response-map 500 ""))
 )
 
-(defn- get-session-permission [session]
+(defn- get-session-permission 
+	"Check if there is a permission in current session."
+	[session]
 	(if (nil? (:permission session))
 		0
 		(permissions (:permission session))
@@ -132,8 +140,10 @@
 ;; HANDLERS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; POST handler
-(defn- handler [{params :params session :session}]
+
+(defn- handler 
+	"POST requests handler"
+	[{params :params session :session}]
 	(try-let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
@@ -189,8 +199,9 @@
 	)
 )
 
-; Websockets handler
-(defn ws-handler [request]
+(defn ws-handler 
+	"Web Sockets handler"
+	[request]
 	(let
 		[
 			session (:session request)

@@ -1,4 +1,5 @@
-(ns server.modules.auth.auth
+(ns ^{:doc "Ensures users' authentication"}
+    server.modules.auth.auth
     (:require
         [monger.operators :refer [$in $and]]
         [server.db :as db]
@@ -9,7 +10,8 @@
 
 ; ------------------------------------------------------------------------------
 ; HELPER FUNCTIONS FOR HANDLERS
-(defn- valid-username-password? [obj]
+(defn- valid-username-password? 
+    [obj]
     (if (or
             (nil? (:username obj))
             (nil? (:password obj))
@@ -24,8 +26,9 @@
 ; ------------------------------------------------------------------------------
 ; FUNCTION HANDLERS
 ; todo: check if specified username already exists
-(defn new-admin [obj _ _]
+(defn new-admin
     "Create new admin associated with a new house-id"
+    [obj _ _]
     (if (valid-username-password? obj)
         (let [new-house (db/insert "house" {} :return-inserted true)]
             (if (nil? new-house)
@@ -47,11 +50,12 @@
     )
 )
 
-(defn login [obj house-id _]
+(defn login
     "
         Log in agent and sets a cookie in the response. If some agent is already
         logged in, this handler returns 400 and does nothing with the session.
     "
+    [obj house-id _]
     (if (nil? house-id)
         (if (valid-username-password? obj)
             (let 
@@ -87,8 +91,9 @@
 
 )
 
-(defn new-user [obj house-id _]
+(defn new-user
     "Create new user agent, associated with the agent's house-id"
+    [obj house-id _]
     (if (valid-username-password? obj)
             (let [inserted (db/insert? "agent"
                 (assoc obj
@@ -106,13 +111,15 @@
 )
 
 
-(defn logout [obj _ agent-id]
+(defn logout
     "Logs user out, sets session to nil"
+    [obj _ agent-id]
     {:status 200, :session nil, :kill-token {(keyword agent-id) (obj :token)}}
 )
 
-(defn register-controller [obj house-id _]
+(defn register-controller
     "Associate a controller with the admin's house-id"
+    [obj house-id _]
     (try-let [controller (db/select "agent" {:_id (ObjectId. (obj :controllerId))})]
         (if (empty? controller)
             {:status 400, :errorMessage "invalid controller specified"}
@@ -126,14 +133,17 @@
     )
 )
 
-(defn set-token [obj _ agent-id]
+(defn set-token
     "Change a token to a new value"
+    [obj _ agent-id]
     (let [parse (fn [key] {key {(keyword agent-id) (key obj)}})]
             (merge {:status 200} (parse :kill-token) (parse :token))))
 
 ; ------------------------------------------------------------------------------
 ; PRIVATE HELPERS FOR DB FUNCTIONS
-(defn- get-condition [flags]
+(defn- get-condition 
+    "Private helpers for DB functions."
+    [flags]
     (let [agent-types ["admin" "user" "controller"]]
         (map second (filter #(true? (first %)) (map vector flags agent-types)))
     )
@@ -141,7 +151,9 @@
 
 ; ------------------------------------------------------------------------------
 ; PUBLIC AGENT DB FUNCTIONS
-(defn get-agents [house-id &{:keys [admin user controller]
+(defn get-agents 
+    "Public agent DB functions"
+    [house-id &{:keys [admin user controller]
     :or {admin false, user false, controller false}}]
     (let [condition (get-condition [admin user controller])]
         (db/select "agent" {$and [{"type" {$in condition}} {"houseId" house-id}]})

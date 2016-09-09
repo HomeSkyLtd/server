@@ -1,4 +1,5 @@
-(ns server.modules.node.node
+(ns ^{:doc "Communicates with app and controller for each new or removed node."}
+    server.modules.node.node
     (:require [server.db :as db]
               (monger [core :as mg] [result :as res])
               [validateur.validation :refer :all]

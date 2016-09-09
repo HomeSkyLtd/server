@@ -1,4 +1,5 @@
-(ns server.utils
+(ns ^{:doc "Helper functions."}
+	server.utils
 	(:require 	[server.db :as db]
 			  	[clojure.data.json :as json]))
 

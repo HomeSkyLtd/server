@@ -1,21 +1,22 @@
-;;#Rule Module
-
-;;This module contains functions to add rules, get rules provided by the machine learning 
-;;algorithms, accept these rules by the users and remove rules that doesn't please them.
-
-(ns server.modules.rule.rule
+(ns ^{:doc "Add rules, get rules provided by the machine learning algorithms, 
+			accept these rules by the users and remove rules that doesn't 
+			please them."}
+	server.modules.rule.rule
 	(:require [server.db :as db]
 			  [server.utils :as utils]
 			  [server.notification :as notification]))
 
-;;##Private function
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 								PRIVATE FUNCTIONS							;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- coll-name 
 	"Return the collection name for a specific house."
 	[houseId] (str "rules_" houseId))
 
 
-;;##Public functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 								PUBLIC FUNCTIONS							;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn new-rules
 	"Insert rules into database. These rules are those defined in the App, 

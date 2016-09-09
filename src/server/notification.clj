@@ -1,24 +1,17 @@
-(ns server.notification
+(ns ^{:doc "All functions to send notifications to controllers and mobile devices."}
+	server.notification
 	(:require [clj-http.client :as client]
 			  [org.httpkit.server :as kit]
 			  [clojure.data.json :as json]))
 
-;;
-;; Keeps track of active websockets channels.
-;;
-(def agent-channel (atom {}))
+(def ^{:doc "Atom that keeps track of active websockets channels."} 
+	agent-channel (atom {}))
 
-;;
-;; Pool of threads for non blocking send of notifications to app.
-;;
-(def thread-pool (agent '()))
+(def ^{:doc "Agent that is a pool of threads for non blocking send of notifications to app."} 
+	thread-pool (agent '()))
 
-;;
-;; Keeps token per user's device.
-;;
-(def tokens (atom {}))
-
-
+(def ^{:doc "Keeps token per user's device."} 
+	tokens (atom {}))
 
 
 
@@ -30,7 +23,7 @@
 ;;															;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn init-tokens
-	"Initialize tokens for the developers' devices' tokens"
+	"Test function to initialize tokens for the developers' devices' tokens"
 	[]
 	(let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
 		  token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"

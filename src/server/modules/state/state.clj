@@ -1,4 +1,6 @@
-(ns server.modules.state.state
+(ns ^{:doc "Monitors new data and command read by the sensors and actuators, 
+			or actions executed by the users over the actuators."}
+	server.modules.state.state
 	(:require
 		[server.db :as db]
 		[monger.operators :refer :all]
