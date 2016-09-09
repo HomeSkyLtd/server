@@ -1,7 +1,6 @@
 (ns ^{:doc "Receive requests and call all modules' functions"}
 	server.handler
 	(:require
-		[server.utils :as utils]
 		[compojure.core :refer :all]
 		[compojure.route :as route]
 		[ring.middleware.session :refer [wrap-session]]
@@ -134,6 +133,28 @@
 	)
 )
 
+(defn- find-keys [map value]
+	"Returns the occurrences of the key related to value in map"
+	(let [values
+			(for [pair map]
+				(if (= (second pair) value)
+					(first pair)
+				)
+			)]
+		(filter #(not (nil? %)) values)
+	)
+)
+
+(defn- build-response
+	"Build response with status and body"
+	([status body]
+		{:status status
+			:headers {"Content-Type" "text/html"}
+			:body body})
+	([status]
+		{:status status
+			:headers {"Content-Type" "text/html"}}))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLERS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -223,7 +244,7 @@
 				(notification/send-pending-notifications! agent-id)
 
 				(kit/on-close channel (fn [status]
-					(swap! notification/agent-channel dissoc (first (utils/find-keys @notification/agent-channel channel)))
+					(swap! notification/agent-channel dissoc (first (find-keys @notification/agent-channel channel)))
 					(println "channel closed: " status)
 					(println (str "active channels: " (count @notification/agent-channel)))
 				))
@@ -263,7 +284,7 @@
 ;; SERVER CONFIGURATION
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defroutes app-routes
-	(GET "/" [] (utils/build-response 200 "Server running"))
+	(GET "/" [] (build-response 200 "Server running"))
 	(POST "/" request (handler request))
 	(GET "/ws" request (ws-handler request))
   	(route/not-found "Not Found"))

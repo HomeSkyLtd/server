@@ -3,7 +3,6 @@
 			please them."}
 	server.modules.rule.rule
 	(:require [server.db :as db]
-			  [server.utils :as utils]
 			  [server.notification :as notification]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
