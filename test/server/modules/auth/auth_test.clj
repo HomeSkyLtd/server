@@ -4,6 +4,7 @@
       [server.db :as db]
       [server.handler :as handler :only [app tokens]]
       [server.modules.auth.auth :as auth :only [get-agents]]
+      [server.notification :as notification :only [tokens]]
       [ring.mock.request :as mock]
       [clojure.data.json :as json]
       [clojure.string :only [split join] :as str]
@@ -164,7 +165,7 @@
                 (is (= (first cookie) "ring-session"))
                 (def admin-cookie cookie)
                 (check-body-ok response-body)
-                (is (contains? (first (vals @handler/tokens)) "12345"))
+                (is (contains? (first (vals @notification/tokens)) "12345"))
             )
         )
     )
@@ -236,7 +237,7 @@
             ))) :key-fn keyword)]
 
             (check-body-ok response-body)
-            (is (empty? (first (vals @handler/tokens))))
+            (is (empty? (first (vals @notification/tokens))))
         )
     )
     (testing "logging out twice in a row"
@@ -263,7 +264,7 @@
                 (is (= (first cookie) "ring-session"))
                 (def user-cookie cookie)
                 (check-body-ok response-body)
-                (is (some #(contains? % "67891") (vals @handler/tokens)))
+                (is (some #(contains? % "67891") (vals @notification/tokens)))
             )
         )
     )
@@ -278,8 +279,8 @@
                 response-body (json/read-str (:body response) :key-fn keyword)
             ]
             (check-body-ok response-body)
-            (is (some #(contains? % "67890") (vals @handler/tokens)))
-            (is (every? #(not (contains? % "67891")) (vals @handler/tokens)))
+            (is (some #(contains? % "67890") (vals @notification/tokens)))
+            (is (every? #(not (contains? % "67891")) (vals @notification/tokens)))
         )
     )
     (testing "triggering user function with proper permissions"
@@ -296,7 +297,7 @@
             :headers {"cookie" (str (first user-cookie) "=" (second user-cookie))}
             ))) :key-fn keyword)]
             (check-body-ok response-body)
-            (is (every? empty? (vals @handler/tokens)))
+            (is (every? empty? (vals @notification/tokens)))
         )
     )
     (testing "logging in as controller"

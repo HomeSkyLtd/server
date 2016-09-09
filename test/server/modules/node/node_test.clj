@@ -2,7 +2,7 @@
   (:use [clojure.test])
   (:use [server.modules.node.node])
   (:require [server.db :as db]
-            [server.utils :as utils])
+            [server.notification :as notification])
   )
 
 ;
@@ -108,6 +108,8 @@
             ]} 0 0)
         ) 400))))
 
+
+
 (deftest test-accept-node
     (testing "accepting existing" 
         (is (= (:status (accept-node
@@ -186,15 +188,3 @@
         (is (= (:status (remove-node
             {:nodeId 126 :controllerId 0 } 0 5)
         ) 200))))
-
-
-(deftest notification
-    (testing "sending request to FCM server."
-        (let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
-              token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
-              houseId 1
-              tokens {houseId #{token1 token2}}
-              response (notify-detected-nodes houseId tokens "New nodes")]
-        (is true? response)
-        (doall (map #(is (= (:status %) 200)) @utils/thread-pool))
-        (doall (map #(is (= ((read-string (apply str (filter (complement #{\:}) (:body %)))) "success") 1)) @utils/thread-pool)))))

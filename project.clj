@@ -15,7 +15,8 @@
                  [clj-http "3.2.0"]
                  ]
   :main server.handler
-  :plugins [[lein-ring "0.9.7"]]
+  :plugins [[lein-ring "0.9.7"]
+            [lein-codox "0.9.7"]]
   :ring {:handler server.handler/app}
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]

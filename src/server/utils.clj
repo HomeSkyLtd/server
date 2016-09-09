@@ -1,9 +1,6 @@
 (ns server.utils
 	(:require 	[server.db :as db]
-			  	[clojure.data.json :as json]
-			  	[clj-http.client :as client]))
-
-(def thread-pool (agent '()))
+			  	[clojure.data.json :as json]))
 
 (defn find-keys [map value]
 	"Returns the occurrences of the key related to value in map"
@@ -37,22 +34,6 @@
 	(if (empty? (:session request))
 		(build-response 403 "<h1>FORBIDDEN</h1>")
 		(build-response 200 "<h3>Session on</h3>")))
-
-(defn- build-msg [token msg]
-	(str "{\"notification\": {\"body\":\"" msg "\"},\"to\":\"" token "\"}"))
-
-(defn- send-on-thread [tokens msg]
-	(let [auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"]
-		(map #(client/post "https://fcm.googleapis.com/fcm/send"
-			{:body (build-msg % msg)
-			 :headers {"Authorization" auth-key "Content-Type" "application/json"}
-			}) tokens
-		)
-	)
-)
-
-(defn send-notification [tokens msg]
-	(await-for 1000 (send thread-pool concat (send-on-thread tokens msg))))
 
 ;
 ;	DATABASE FUNCTIONS

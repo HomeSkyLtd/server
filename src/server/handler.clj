@@ -14,20 +14,15 @@
 		[server.modules.auth.auth :as auth]
 		[server.modules.node.node :as node]
 		[server.modules.state.state :as state]
-		[server.modules.rule.rule :as rule]))
+		[server.modules.rule.rule :as rule]
+		[server.notification :as notification]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; STATE REFERENCES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; keeps track of active websockets channels
-(def agent-channel (atom {}))
-
 ; keeps session data
 (def session-storage (atom {}))
-
-; keeps token per user
-(def tokens (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLER CALLBACK FUNCTIONS
@@ -120,8 +115,10 @@
 	those values will be used when constructing the response."
 	([response-map status message]
 		(json/write-str (merge {:status status, :errorMessage message} response-map)))
-	([status message] (build-response-json {} status message))
-	([response-map] (build-response-json response-map 500 ""))
+	([status message] 
+		(build-response-json {} status message))
+	([response-map] 
+		(build-response-json response-map 500 ""))
 )
 
 (defn- get-session-permission [session]
@@ -137,7 +134,6 @@
 
 ; POST handler
 (defn- handler [{params :params session :session}]
-	; (println params)
 	(try-let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
@@ -147,52 +143,46 @@
 			houseId (:houseId session)
 			agentId (:agentId session)
 		]
-		; (println session)
 		(if (or (nil? function) (nil? (function-handlers function)))
 			(build-response-json 400 "No function found!")
-			(cond
-				;If not authorized due to mismatched authorization
-				(zero? (bit-and permission (function-permissions function)))
-					(if (= (permissions "base") permission)
-						(build-response-json 403 "User not logged in")
-						(build-response-json 403 "Unauthorized operation")
-					)
-				;If everything OK
-				:else
-					(let [	result ((function-handlers function) obj houseId agentId)
-							session (:session result)
-							token (:token result)
-							kill-token (:kill-token result)]
-						
-						; Handle token creation / destruction
-						(if (not (nil? (first (vals token))))
-							(if (contains? @tokens (first (keys token)))
-								(swap! tokens assoc 
-									(first (keys token)) 
-									(conj (@tokens (first (keys token))) (first (vals token)))
-								)
-								(swap! tokens assoc
-									(first (keys token))
-									#{(first (vals token))}
-								)
+			;If not authorized due to mismatched authorization
+			(if (zero? (bit-and permission (function-permissions function)))
+				(if (= (permissions "base") permission)
+					(build-response-json 403 "User not logged in")
+					(build-response-json 403 "Unauthorized operation")
+				)
+				(let [result ((function-handlers function) obj houseId agentId)
+					  session (:session result)
+					  token (:token result)
+					  kill-token (:kill-token result)]
+					
+					; Handle token creation / destruction
+					(if (not (nil? (first (vals token))))
+						(if (contains? @notification/tokens (first (keys token)))
+							(swap! notification/tokens assoc 
+								(first (keys token)) 
+								(conj (@notification/tokens (first (keys token))) (first (vals token)))
+							)
+							(swap! notification/tokens assoc
+								(first (keys token))
+								#{(first (vals token))}
 							)
 						)
-						(if (not (nil? kill-token))
-							(if (contains? @tokens (first (keys kill-token)))
-								(swap! tokens assoc 
-									(first (keys kill-token)) 
-									(disj (@tokens (first (keys kill-token))) (first (vals kill-token)))
-								)
-								(println "Warning: trying to delete inexisting token")
+					)
+					(if (not (nil? kill-token))
+						(if (contains? @notification/tokens (first (keys kill-token)))
+							(swap! notification/tokens assoc 
+								(first (keys kill-token)) 
+								(disj (@notification/tokens (first (keys kill-token))) (first (vals kill-token)))
 							)
-						)
-
-
-						(if (contains? result :session)
-							{:status 200 :body (build-response-json (dissoc result :session :token :kill-token)) :session session}
-							(build-response-json (dissoc result :token :kill-token))
+							(println "Warning: trying to delete inexisting token")
 						)
 					)
+					(if (contains? result :session)
+						{:status 200 :body (build-response-json (dissoc result :session :token :kill-token)) :session session}
+						(build-response-json (dissoc result :token :kill-token))
+					)
+				)
 			)
 		)
 		(catch Exception e (build-response-json 400 (str "Invalid POST data caused " e)))
@@ -208,53 +198,53 @@
 			agentId (:agentId session)
 			permission (bit-or (permissions "base") (get-session-permission session))
 		]
-		(cond
-			;If not authorized due to mismatched authorization
-			(zero? (bit-and permission (permissions "controller")))
-				(if (= (permissions "base") permission)
-					{:status 403 :headers {"X-WebSocket-Reject-Reason" "Not logged in"}}
-					{:status 403 :headers {"X-WebSocket-Reject-Reason" "Unauthorized operation"}}
-				)
-			;If everything OK
-			:else
-				(kit/with-channel request channel
-					; (println request)
-					(swap! agent-channel assoc agentId channel)
-					(println "Received websockets call")
-					(println (str "active channels: " (count @agent-channel)))
-					(println @agent-channel)
-					(kit/on-close channel (fn [status]
-						(swap! agent-channel dissoc (first (utils/find-keys @agent-channel channel)))
-						(println "channel closed: " status)
-						(println (str "active channels: " (count @agent-channel)))
-					))
-					; (on-receive channel (fn [data] ;; echo it back
-					;                   (println (str "Received data: " data))
-					;                   (send! channel data)))
-				)
-		)
-	)
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PUBLIC FUNCTIONS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn send-websocket-notification! [controller-id message]
-	"
-		Sends message to controller-id through a websockets channel. Returns true
-		if successful, and false otherwise.
-	"
-	(println @agent-channel)
-	(let [channel (@agent-channel controller-id)]
-		(if (nil? channel)
-			false
-			(do
-				(kit/send! channel message)
-				true
+		;If not authorized due to mismatched authorization
+		(if (zero? (bit-and permission (permissions "controller")))
+			(if (= (permissions "base") permission)
+				{:status 403 :headers {"X-WebSocket-Reject-Reason" "Not logged in"}}
+				{:status 403 :headers {"X-WebSocket-Reject-Reason" "Unauthorized operation"}}
+			)
+			(kit/with-channel request channel
+				(swap! notification/agent-channel assoc agentId channel)
+				(println "Received websockets call")
+				(println (str "active channels: " (count @notification/agent-channel)))
+				(println @notification/agent-channel)
+				(kit/on-close channel (fn [status]
+					(swap! notification/agent-channel dissoc (first (utils/find-keys @notification/agent-channel channel)))
+					(println "channel closed: " status)
+					(println (str "active channels: " (count @notification/agent-channel)))
+				))
+				; (on-receive channel (fn [data] ;; echo it back
+				;                   (println (str "Received data: " data))
+				;                   (send! channel data)))
 			)
 		)
 	)
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SERVER CONFIGURATION
