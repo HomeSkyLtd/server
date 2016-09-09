@@ -202,11 +202,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;							   HELPER  FUNCTIONS							;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn send-pending-notifications! [controller-id]
+(defn send-pending-notifications!
 	"
 		Sends pending notifications, if any, to the specified controller. Clears the
 		queue of pending notifications if successful.
 	"
+	[controller-id]
 	(if (not (empty? (@pending-ws-notifications controller-id)))
 		(let [messages (@pending-ws-notifications controller-id)]
 			(swap! pending-ws-notifications dissoc controller-id)
