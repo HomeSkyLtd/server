@@ -82,5 +82,7 @@
 	[coll-name str-key]
 	(mc/distinct db coll-name str-key))
 
-(defn find-rows-with-key [coll-name key]
+(defn find-rows-with-key 
+	"Return the maps that contains key as one of the keys."
+	[coll-name key]
 	(mc/find-maps db coll-name {key {op/$exists true}}))
