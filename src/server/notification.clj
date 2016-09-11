@@ -11,7 +11,7 @@
 	pending-ws-notifications (atom {}))
 
 (def ^{:doc "Agent that is a pool of threads for non blocking send of notifications to app."} 
-	thread-pool (agent '()))
+	thread-pool (agent true))
 
 (def ^{:doc "Keeps token per user's device."} 
 	tokens (atom {}))
@@ -30,7 +30,7 @@
 	[]
 	(let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
 		  token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
-		  house-tokens {1 #{token1 token2}}]
+		  house-tokens {1 #{token1}}]; token2}}]
 		(reset! tokens house-tokens)
 	)
 )
@@ -53,17 +53,31 @@
 	(let [auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"
 		  url "https://fcm.googleapis.com/fcm/send"
 		  headers {"Authorization" auth-key "Content-Type" "application/json"}]
-		(doall (map #(client/post url {:body (build-msg % msg) :headers headers}) house-tokens))
+		(every? 
+			(fn [res] (do (println res) (= 1 (get (:body res) "success"))))
+			(doall 
+				(map 
+					(fn [token] (client/post url {:body (build-msg token msg) :headers headers}))
+					house-tokens
+				)
+			)
+		)
 	)
 )
+
 
 (defn- send-notification
 	"Send notifications in a pool of threads."
 	[houseId msg]
-	(let [house-tokens (@tokens houseId)]
-		(if (await-for 1000 (send thread-pool concat (send-on-thread house-tokens msg)))
-			(nil? (agent-error thread-pool))
-			false)))
+	(let [house-tokens (@tokens houseId) timeout 1000]
+		(if (await-for timeout (send thread-pool (fn [_] (send-on-thread house-tokens msg))))
+			(do
+				(println "__DEBUG__" @thread-pool)
+				(println "__DEBUG__"  (nil? (agent-error thread-pool)))
+				(and @thread-pool (nil? (agent-error thread-pool))))
+		)
+	)
+)
 
 
 (defn- send-websocket-notification!
