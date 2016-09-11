@@ -11,6 +11,7 @@
 ; ------------------------------------------------------------------------------
 ; HELPER FUNCTIONS FOR HANDLERS
 (defn- valid-username-password? 
+    "Checks if username and password are present and are not empty"
     [obj]
     (not (or
             (nil? (:username obj))
@@ -21,25 +22,35 @@
     )
 )
 
+(defn- username-already-exists?
+    "Checks if the specified username is already registered in the database"
+    [username]
+    (let [agent-db (db/select "agent" {:username username})]
+        (not (empty? agent-db))
+    )
+)
+
 ; ------------------------------------------------------------------------------
 ; FUNCTION HANDLERS
-; todo: check if specified username already exists
 (defn new-admin
     "Create new admin associated with a new house-id"
     [obj _ _]
     (if (valid-username-password? obj)
-        (let [new-house (db/insert "house" {} :return-inserted true)]
-            (if (nil? new-house)
-                {:status 500, :errorMessage "Failed to insert house in db"}
-                (let [inserted (db/insert? "agent"
-                    (assoc obj
-                        :type "admin"
-                        :houseId (str (:_id new-house))
-                        :password (passhash/encrypt (:password obj))
-                    ))]
-                    (if inserted
-                        {:status 200}
-                        {:status 500, :errorMessage "failed to insert admin in db"}
+        (if (username-already-exists? (:username obj))
+            {:status 400, :errorMessage "username already exists"}
+            (let [new-house (db/insert "house" {} :return-inserted true)]
+                (if (nil? new-house)
+                    {:status 500, :errorMessage "Failed to insert house in db"}
+                    (let [inserted (db/insert? "agent"
+                        (assoc obj
+                            :type "admin"
+                            :houseId (str (:_id new-house))
+                            :password (passhash/encrypt (:password obj))
+                        ))]
+                        (if inserted
+                            {:status 200}
+                            {:status 500, :errorMessage "failed to insert admin in db"}
+                        )
                     )
                 )
             )
@@ -93,6 +104,8 @@
     "Create new user agent, associated with the agent's house-id"
     [obj house-id _]
     (if (valid-username-password? obj)
+        (if (username-already-exists? (:username obj))
+            {:status 400, :errorMessage "username already exists"}
             (let [inserted (db/insert? "agent"
                 (assoc obj
                     :type "user"
@@ -104,6 +117,7 @@
                     {:status 500 :errorMessage "could not insert new user"}
                 )
             )
+        )
         {:status 400, :errorMessage "username and password cannot be empty"}
     )
 )
