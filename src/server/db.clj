@@ -52,7 +52,7 @@
 	"Acknowledge the update"
 	[coll-name conditions
     &{:keys [set add-to-set multi upsert] :or {set {} add-to-set {} multi true upsert false}}]
-    (res/acknowledged? (update coll-name conditions :set set :add-to-set add-to-set :multi multi :upsert upsert)))
+    (res/acknowledged? (server.db/update coll-name conditions :set set :add-to-set add-to-set :multi multi :upsert upsert)))
 
 (defn remove
     "Remove documents"

@@ -110,13 +110,24 @@
                 (if (nil? node)
                     {:status 400 :errorMessage "Tried to accept non existent node"}
                     (if (= (:accepted node) 0)
-                        (if (if (= (:accept obj) 1)
-                                (db/update? (str "node_" house-id) (select-keys obj [:controllerId :nodeId]) :set {:accepted 1})
-                                (db/remove? (str "node_" house-id) (select-keys obj [:controllerId :nodeId])))
-                            (notification/notify-accepted-node obj)
-                            {:status 500 :errorMessage "Database error: Couldn't accept node" })
-                        {:status 400 :errorMessage "Tried to accept accepted node" })))
-            {:status 400 :errorMessage (error-message valid)})))
+                        (if (= (:accept obj) 1)
+                            (if (db/update? (str "node_" house-id) (select-keys obj [:controllerId :nodeId]) :set {:accepted 1})
+                                (notification/notify-accepted-node obj)
+                                {:status 500 :errorMessage "Database error: Couldn't accept node" }
+                            )
+                            (if (db/remove? (str "node_" house-id) (select-keys obj [:controllerId :nodeId]))
+                                (notification/notify-removed-node obj)
+                                {:status 500 :errorMessage "Database error: Couldn't accept node" }
+                            )
+                        )
+                        {:status 400 :errorMessage "Tried to accept accepted node" }
+                    )
+                )
+            )
+            {:status 400 :errorMessage (error-message valid)}
+        )
+    )
+)
 
 
 (defn remove-node
