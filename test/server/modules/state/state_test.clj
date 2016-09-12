@@ -13,6 +13,13 @@
   ;;
   (notification/init-tokens)
 
+
+
+(comment
+
+
+
+
   (testing "inserting new data ok"
     (let [obj {:data [
                   {:nodeId 3 
@@ -128,13 +135,13 @@
     (is (= (state/get-house-state nil houseId nil) obj))))
 
 
-
+)
 
 
 
   (testing "mock request from controller to server"
     (let [houseId 1
           obj {:result 1 :action {:nodeId 1 :commandId 1 :value 1}}]
-      (is (= 200 (:status (state/send-action-result obj houseId nil))))))
+      (is (= {:status 200} (state/send-action-result obj houseId nil)))))
 
 )
