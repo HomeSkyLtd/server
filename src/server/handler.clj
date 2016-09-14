@@ -292,7 +292,7 @@
 (def app
 	(-> app-routes
 		(reload/wrap-reload)
-		(wrap-session {:cookie-attrs {:max-age 20} :store (ring.middleware.session.memory/memory-store session-storage)})
+		(wrap-session {:cookie-attrs {:max-age 3600} :store (ring.middleware.session.memory/memory-store session-storage)})
 		(wrap-params)))
 
 (defn -main[]
