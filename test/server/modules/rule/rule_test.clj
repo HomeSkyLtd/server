@@ -96,9 +96,27 @@
               (not (contains? result :conflictingRule))))
         (is (= 1 (:accepted (mc/find-one-as-map db/db coll-name obj))))))
 
+    (testing "trying to accept a conflicting rule"
+      (let [houseId 1
+            obj {:controllerId 1 :command {:nodeId 2 :commandId 1 :value 1}}
+            result (rule/accept-rule obj houseId nil)]
+        (is 
+          (= (update result :conflictingRule #(dissoc % :_id))
+            {
+              :status 200 
+              :conflictingRule (assoc obj 
+                                  :accepted 1
+                                  :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]
+                                )
+            }
+          )
+        )
+      )
+    )
 
 
-;TODO: Test a conflict rule
+
+
 
 
 

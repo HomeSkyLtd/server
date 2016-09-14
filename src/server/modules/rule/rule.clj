@@ -73,7 +73,7 @@
 					{:status 200}
 					{:status 500 :errorMessage "DB did not update value."}
 				)
-				{:status 200 :conflictingRule result}
+				{:status 200 :conflictingRule (first result)}
 			)
 		)
 		{:status 400 :errorMessage "Missing parameters in obj"}
