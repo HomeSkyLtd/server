@@ -44,22 +44,22 @@
 (defn- build-msg
 	"Build message to be sent as notification to smartphone."
 	[token msg]
+	;TODO: change :notification to :data
 	(json/write-str {:notification {:body msg} :to token})
 )
 
 (defn- send-on-thread
 	"Send a notification in one of the threads of the pool."
-	[house-tokens msg]
-	(let [auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"
+	[houseId msg]
+	(let [house-tokens (@tokens houseId)
+		  auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"
 		  url "https://fcm.googleapis.com/fcm/send"
-		  headers {"Authorization" auth-key "Content-Type" "application/json"}]
-		(every? 
-			(fn [res] (do (println res) (= 1 (get (:body res) "success"))))
-			(doall 
-				(map 
-					(fn [token] (client/post url {:body (build-msg token msg) :headers headers}))
-					house-tokens
-				)
+		  headers {"Authorization" auth-key "Content-Type" "application/json"}
+		  result (promise)]
+		(doseq [house-token house-tokens]
+			(future (deliver result (client/post url {:body (build-msg house-token msg) :headers headers})))
+			(if (= 0 ((json/read-str (:body @result)) "success"))
+				(swap! tokens #(disj (% houseId) house-token))
 			)
 		)
 	)
@@ -69,13 +69,8 @@
 (defn- send-notification
 	"Send notifications in a pool of threads."
 	[houseId msg]
-	(let [house-tokens (@tokens houseId) timeout 1000]
-		(if (await-for timeout (send thread-pool (fn [_] (send-on-thread house-tokens msg))))
-			(do
-				(println "__DEBUG__" @thread-pool)
-				(println "__DEBUG__"  (nil? (agent-error thread-pool)))
-				(and @thread-pool (nil? (agent-error thread-pool))))
-		)
+	(let [timeout (* 10 1000)]
+		(send thread-pool (fn [_] (send-on-thread houseId msg)))
 	)
 )
 
@@ -87,12 +82,8 @@
 	(let [channel (@agent-channel controller-id)]
 		(if (nil? channel)
 			(if (contains? @pending-ws-notifications controller-id)
-				(and 
-					(swap! pending-ws-notifications assoc controller-id (conj (@pending-ws-notifications controller-id) message))
-					false)
-				(and
-					(swap! pending-ws-notifications assoc controller-id (list message))
-					false)
+				(swap! pending-ws-notifications assoc controller-id (conj (@pending-ws-notifications controller-id) message))
+				(swap! pending-ws-notifications assoc controller-id (list message))
 			)
 			(if (map? message)
 				(kit/send! channel (json/write-str message))
@@ -130,15 +121,15 @@
 	"Server -> App
 	Send a notification to user's device with the confirmation of an action done."
 	[action-result houseId]
-	(if (every? action-result [:result :action])
+	(if (and
+			(every? action-result [:result :action])
+			(every? (:action action-result) [:value :nodeId]))
 		(let   [result (if (= (:result action-result) 1) "Success" "Failed")
 			  	value  (:value (:action action-result))
 			  	nodeId (:nodeId (:action action-result))
 			  	msg (str result " to send value " value " to node " nodeId)]
-			(if (send-notification houseId msg)
-				{:status 200}
-				{:status 500 :errorMessage "Thread pool couldn't handle."}
-			)
+			(send-notification houseId msg)
+			{:status 200}
 		)
 		{:status 400 :errorMessage "Not found the keys result or action"}
 	)
@@ -171,10 +162,10 @@
 	and the rules inserted by the user."
 	[rules]
 	(let [list-of-ids (list-controller-ids rules)]
-		(if (every? true? (map #(send-websocket-notification! % (build-count rules %)) list-of-ids))
-			{:status 200}
-			{:status 410 :errorMessage "WebSocket channel not found."}
+		(doseq [sending-id list-of-ids]
+			(send-websocket-notification! sending-id (build-count rules sending-id))
 		)
+		{:status 200}
 	)
 )
 
@@ -182,10 +173,8 @@
 	"Server -> App
 	Send a notification to user's device with new learnt rules."
 	[houseId rules]
-	(if (send-notification houseId (str "New detected rules: " (count rules)))
-		{:status 200}
-		{:status 500 :errorMessage "Thread pool couldn't handle."}
-	)
+	(send-notification houseId (str "New detected rules: " (count rules)))
+	{:status 200}
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -220,10 +209,8 @@
     "Server -> App
     Send a notification to user's device with how many new detected nodes."
     [houseId nodes]
-    (if (send-notification houseId (str "New detected nodes: " (count nodes)))
-    	{:status 200}
-		{:status 500 :errorMessage "Thread pool couldn't handle."}
-	)
+    (send-notification houseId (str "New detected nodes: " (count nodes)))
+    {:status 200}
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

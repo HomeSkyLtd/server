@@ -17,7 +17,7 @@
   (md/drop-db db/db)
   (mc/insert db/db coll-name {:accepted 0 :controllerId 1 :command {:nodeId 2 :commandId 1 :value 1} :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]})
 
-  (testing "new node ok"
+  (testing "new rule ok"
     (let [obj {:rules [{:command {
                           :nodeId 1 
                           :commandId 1 
@@ -28,22 +28,22 @@
           houseId 1]
       (is (= 200 (:status (rule/new-rules obj houseId nil))))))
 
-  (testing "new node without rules"
+  (testing "new rule without rules"
     (let [obj nil houseId 1]
       (is (= 400 (:status (rule/new-rules obj houseId nil))))))
 
  
-  (testing "new node without nodeId"
+  (testing "new rule without nodeId"
     (let [obj {:rules [{:controllerId 1 :commandId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
             houseId 1]
       (is (= 400 (:status (rule/new-rules obj houseId nil))))))
 
-  (testing "new node without controllerId"
+  (testing "new rule without controllerId"
     (let [obj {:rules [{:nodeId 1 :commandId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
             houseId 1]
       (is (= 400 (:status (rule/new-rules obj houseId nil))))))
 
-  (testing "new node without commandId"
+  (testing "new rule without commandId"
     (let [obj {:rules [{:controllerId 1 :nodeId 1 :value 20 :clauses [{:lhs "1.1", :operator ">", :rhs "20"}]}]}
             houseId 1]
       (is (= 400 (:status (rule/new-rules obj houseId nil))))))
@@ -81,7 +81,6 @@
                                   }
                                 ]
                         }]
-      (println (rule/get-learnt-rules {} houseId nil))
       (is (= (rule/get-learnt-rules {} houseId nil) obj))))
 
 
@@ -89,9 +88,32 @@
 
 
     (testing "accepting rule"
-      (let [houseId 1 obj {:controllerId 1 :command {:nodeId 2 :commandId 1 :value 1}}]
-        (rule/accept-rule obj houseId nil)
-        (is (= (dissoc (mc/find-one-as-map db/db coll-name obj) :_id) (assoc obj :accepted 1 :clauses [{:lhs "2.1", :operator ">", :rhs "0"}])))))
+      (let [houseId 1 
+            obj {:controllerId 1 :command {:nodeId 2 :commandId 1 :value 1}}
+            result (rule/accept-rule obj houseId nil)]
+        (is (and
+              (= 200 (:status result))
+              (not (contains? result :conflictingRule))))
+        (is (= 1 (:accepted (mc/find-one-as-map db/db coll-name obj))))))
+
+    (testing "trying to accept a conflicting rule"
+      (let [houseId 1
+            obj {:controllerId 1 :command {:nodeId 2 :commandId 1 :value 1}}
+            result (rule/accept-rule obj houseId nil)]
+        (is 
+          (= (update result :conflictingRule #(dissoc % :_id))
+            {
+              :status 200 
+              :conflictingRule (assoc obj 
+                                  :accepted 1
+                                  :clauses [{:lhs "2.1", :operator ">", :rhs "0"}]
+                                )
+            }
+          )
+        )
+      )
+    )
+
 
 
 
@@ -100,14 +122,14 @@
 
     (testing "remove rule"
       (let [houseId 1
-            obj {:nodeId 2 :controllerId 1 :commandId 1 :value 1}]
-            (is (= 200 (:status (rule/remove-rule obj houseId nil))))
+            obj {:controllerId 1 :command {:nodeId 2 :commandId 1 :value 1}}]
+            (is (= {:status 200} (rule/remove-rule obj houseId nil)))
             (is (empty? (db/select coll-name obj)))))
 
     (testing "try to remove rule that is not in DB"
       (let [houseId 1
-            obj {:nodeId 3 :controllerId 1 :commandId 1 :value 1}]
-            (is (= (rule/remove-rule obj houseId nil) {:status 400 :errorMessage "DB does not contain obj."}))
+            obj {:controllerId 123 :command {:nodeId 123 :commandId 123 :value 123}}]
+            (is (= {:status 400 :errorMessage "DB does not contain obj."} (rule/remove-rule obj houseId nil)))
             (is (empty? (db/select coll-name obj)))))
 
     )
