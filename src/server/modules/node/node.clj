@@ -40,7 +40,7 @@
 
 
 
-
+;TODO: dar assoc de um extra vazio
 (defn new-detected-nodes 
     "Function to save new detected nodes and notify users"
     [obj house-id controller-id]

@@ -57,6 +57,7 @@
 		  headers {"Authorization" auth-key "Content-Type" "application/json"}
 		  result (promise)]
 		(doseq [house-token house-tokens]
+			(println msg)
 			(future (deliver result (client/post url {:body (build-msg house-token msg) :headers headers})))
 			(if (= 0 ((json/read-str (:body @result)) "success"))
 				(swap! tokens #(disj (% houseId) house-token))
