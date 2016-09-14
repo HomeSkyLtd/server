@@ -104,14 +104,14 @@
 
     (testing "remove rule"
       (let [houseId 1
-            obj {:nodeId 2 :controllerId 1 :commandId 1 :value 1}]
-            (is (= 200 (:status (rule/remove-rule obj houseId nil))))
+            obj {:controllerId 1 :command {:nodeId 2 :commandId 1 :value 1}}]
+            (is (= {:status 200} (rule/remove-rule obj houseId nil)))
             (is (empty? (db/select coll-name obj)))))
 
     (testing "try to remove rule that is not in DB"
       (let [houseId 1
-            obj {:nodeId 3 :controllerId 1 :commandId 1 :value 1}]
-            (is (= (rule/remove-rule obj houseId nil) {:status 400 :errorMessage "DB does not contain obj."}))
+            obj {:controllerId 123 :command {:nodeId 123 :commandId 123 :value 123}}]
+            (is (= {:status 400 :errorMessage "DB does not contain obj."} (rule/remove-rule obj houseId nil)))
             (is (empty? (db/select coll-name obj)))))
 
     )
