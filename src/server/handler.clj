@@ -38,6 +38,7 @@
 		"newCommand" state/new-command,
 		"newAction" state/new-action,
 		"getHouseState" state/get-house-state,
+		"actionResult" state/send-action-result,
 
 		"newRules" rule/new-rules,
 		"getRules" rule/get-rules,
