@@ -107,5 +107,5 @@
 (defn send-action-result
 	"Receive the result of an action (done or couldn't be done) from the controller"
 	[obj houseId agentId]
-	(notification/notify-action-result (assoc obj :controllerId agentId) houseId)
+	(notification/notify-action-result (update obj :action #(assoc % :controllerId agentId)) houseId)
 )

@@ -133,16 +133,18 @@
 
   (testing "mock request from controller to server"
     (let [houseId 1
+          controllerId 1
           obj {:result 1 :action {:nodeId 1 :commandId 1 :value 1}}]
-      (is (= {:status 200} (state/send-action-result obj houseId nil)))))
+      (is (= {:status 200} (state/send-action-result obj houseId controllerId)))))
 
   (testing "send notification to an invalid token"
     (let [houseId 123
+          controllerId 123
           obj {:result 1 :action {:nodeId 1 :commandId 1 :value 1}}
           invalidToken "ThisIsAnInvalidToken"
           sleep (* 2 1000)]
       (swap! notification/tokens assoc houseId #{invalidToken})
-      (state/send-action-result obj houseId nil)
+      (state/send-action-result obj houseId controllerId)
       (loop [secs 0] 
         (when 
           (and (contains? (@notification/tokens houseId) invalidToken) (< secs sleep))
