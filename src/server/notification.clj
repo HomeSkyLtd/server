@@ -44,7 +44,7 @@
 (defn- build-msg
 	"Build message to be sent as notification to smartphone."
 	[token msg]
-	(json/write-str {:data {:body msg} :to token})
+	(json/write-str {:notification {:body msg} :to token})
 )
 
 (defn- send-on-thread
@@ -126,7 +126,7 @@
 		(let   [result (if (= (:result action-result) 1) "Success" "Failed")
 			  	value  (:value (:action action-result))
 			  	nodeId (:nodeId (:action action-result))
-			  	msg (str result " to send value " value " to node " nodeId)]
+			  	msg (json/write-str (assoc action-result :functions "actionResult"))]
 			(send-notification houseId msg)
 			{:status 200}
 		)
@@ -172,7 +172,7 @@
 	"Server -> App
 	Send a notification to user's device with new learnt rules."
 	[houseId rules]
-	(send-notification houseId (str "New detected rules: " (count rules)))
+	(send-notification houseId (json/write-str {:notification "newRules" :quantity (count rules)}))
 	{:status 200}
 )
 
@@ -208,7 +208,7 @@
     "Server -> App
     Send a notification to user's device with how many new detected nodes."
     [houseId nodes]
-    (send-notification houseId (str "New detected nodes: " (count nodes)))
+    (send-notification houseId (json/write-str {:notification "detectedNode" :quantity (count nodes)}))
     {:status 200}
 )
 
