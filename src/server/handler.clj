@@ -89,6 +89,7 @@
 		"newCommand" (permissions "controller"),
 		"newAction" (bit-or (permissions "user") (permissions "admin")),
 		"getHouseState" (bit-or (permissions "user") (permissions "admin")),
+		"actionResult" (permissions "controller"),
 
 		"newRules" (bit-or (permissions "admin") (permissions "user")),
 		"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
