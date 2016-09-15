@@ -30,7 +30,7 @@
 	[]
 	(let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
 		  token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
-		  house-tokens {1 #{token1}}]; token2}}]
+		  house-tokens {1 #{token1 token2}}]
 		(reset! tokens house-tokens)
 	)
 )
@@ -126,7 +126,7 @@
 		(let   [result (if (= (:result action-result) 1) "Success" "Failed")
 			  	value  (:value (:action action-result))
 			  	nodeId (:nodeId (:action action-result))
-			  	msg (json/write-str (assoc action-result :functions "actionResult"))]
+			  	msg (json/write-str (assoc action-result :notification "actionResult"))]
 			(send-notification houseId msg)
 			{:status 200}
 		)
