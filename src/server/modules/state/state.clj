@@ -45,7 +45,7 @@
 	[obj houseId controllerId]
 	(if-not (nil? houseId)
 		(if-let [command (obj :command)]
-			(if (every? true? (map #(and (contains? % :nodeId) (contains? % :commandId) (contains? % :value) (contains? % :timestamp)) command))
+			(if (every? true? (map #(every? % [:nodeId :commandId :value :timestamp]) command))
 				(if (and 
 						(every? true? (map #(db/insert? (str "all_states_" houseId) (assoc % :controllerId controllerId)) command))
 						(every? true? 
@@ -76,7 +76,7 @@
 	[obj houseId agentId]
 	(if-not (nil? houseId)
 		(if-let [action (obj :action)]
-			(if (and (contains? action :controllerId) (contains? action :nodeId) (contains? action :commandId) (contains? action :value))
+			(if (every? action [:controllerId :nodeId :commandId :value])
 				(if (and
 						(db/insert? (str "all_states_" houseId) (assoc action :agentId agentId))
 						(db/update? (str "last_states_" houseId)
