@@ -39,8 +39,6 @@
         (str (first (first (vals (last error-map)))) ": " (subs (str (first (keys (last error-map)))) 1)))
 
 
-
-;TODO: dar assoc de um extra vazio
 (defn new-detected-nodes 
     "Function to save new detected nodes and notify users"
     [obj house-id controller-id]
@@ -58,7 +56,7 @@
                     ;Check if node already exists
                     (if (not-any? #(node-exists? house-id controller-id (:nodeId %)) nodes)
                         (if (db/insert? (str "node_" house-id) 
-                                (map #(assoc % :controllerId controller-id :accepted 0 :alive 1) nodes))
+                                (map #(assoc % :controllerId controller-id :accepted 0 :alive 1 :extra {}) nodes))
                             (notification/notify-detected-nodes house-id nodes)
                             {:status 500 :errorMessage "Database error: Couldn't insert"}
                         )
