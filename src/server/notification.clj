@@ -44,7 +44,7 @@
 (defn- build-msg
 	"Build message to be sent as notification to smartphone."
 	[token msg]
-	(json/write-str {:notification {:body msg} :to token})
+	(json/write-str {:data {:data msg} :to token})
 )
 
 (defn- send-on-thread
