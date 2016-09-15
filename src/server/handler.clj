@@ -60,7 +60,12 @@
 		"testBase" test-handler,
 		"testUser" test-handler,
 		"testAdmin" test-handler,
-		"testController" test-handler
+		"testController" test-handler,
+
+		"notifyNewAction" notification/notify-new-action,
+		"notifyNewRules" notification/notify-new-rules,
+		"notifyAcceptedNode" notification/notify-accepted-node,
+		"notifyRemovedNode" notification/notify-removed-node
 	})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -105,7 +110,12 @@
 		"testBase" (permissions "base"),
 		"testUser" (permissions "user"),
 		"testAdmin" (permissions "admin"),
-		"testController" (permissions "controller")
+		"testController" (permissions "controller"),
+
+		"notifyNewAction" (bit-or (permissions "user") (permissions "admin")),
+		"notifyNewRules" (bit-or (permissions "user") (permissions "admin")),
+		"notifyAcceptedNode" (bit-or (permissions "user") (permissions "admin")),
+		"notifyRemovedNode" (bit-or (permissions "user") (permissions "admin"))
 	})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -204,7 +214,7 @@
 								(first (keys kill-token)) 
 								(disj (@notification/tokens (first (keys kill-token))) (first (vals kill-token)))
 							)
-							(println "Warning: trying to delete inexisting token")
+							;(println "Warning: trying to delete inexisting token")
 						)
 					)
 					(if (contains? result :session)
@@ -236,17 +246,17 @@
 			)
 			(kit/with-channel request channel
 				(swap! notification/agent-channel assoc agent-id channel)
-				(println "Received websockets call")
-				(println (str "active channels: " (count @notification/agent-channel)))
-				(println @notification/agent-channel)
+				;(println "Received websockets call")
+				;(println (str "active channels: " (count @notification/agent-channel)))
+				;(println @notification/agent-channel)
 
 				;Send pending notifications, if any
 				(notification/send-pending-notifications! agent-id)
 
 				(kit/on-close channel (fn [status]
 					(swap! notification/agent-channel dissoc (first (find-keys @notification/agent-channel channel)))
-					(println "channel closed: " status)
-					(println (str "active channels: " (count @notification/agent-channel)))
+					;(println "channel closed: " status)
+					;(println (str "active channels: " (count @notification/agent-channel)))
 				))
 				; (on-receive channel (fn [data] ;; echo it back
 				;                   (println (str "Received data: " data))

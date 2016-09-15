@@ -44,8 +44,7 @@
 (defn- build-msg
 	"Build message to be sent as notification to smartphone."
 	[token msg]
-	;TODO: change :notification to :data
-	(json/write-str {:notification {:body msg} :to token})
+	(json/write-str {:data {:body msg} :to token})
 )
 
 (defn- send-on-thread
@@ -57,7 +56,6 @@
 		  headers {"Authorization" auth-key "Content-Type" "application/json"}
 		  result (promise)]
 		(doseq [house-token house-tokens]
-			(println msg)
 			(future (deliver result (client/post url {:body (build-msg house-token msg) :headers headers})))
 			(if (= 0 ((json/read-str (:body @result)) "success"))
 				(swap! tokens #(disj (% houseId) house-token))
