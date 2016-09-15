@@ -119,10 +119,10 @@
 (defn notify-action-result
 	"Server -> App
 	Send a notification to user's device with the confirmation of an action done."
-	[action-result houseId]
+	[action-result controllerId houseId]
 	(if (and
 			(every? action-result [:result :action])
-			(every? (:action action-result) [:value :nodeId]))
+			(every? (:action action-result) [:value :nodeId :controllerId :commandId]))
 		(let   [result (if (= (:result action-result) 1) "Success" "Failed")
 			  	value  (:value (:action action-result))
 			  	nodeId (:nodeId (:action action-result))
