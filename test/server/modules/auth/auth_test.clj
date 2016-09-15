@@ -82,6 +82,8 @@
                 inserted-admin (first (db/select "agent" {"username" "admin1"}))
                 inserted-house (first (db/select "house" {}))
             ]
+            (def admin-house-id (:houseId inserted-admin))
+
             (is (not (nil? inserted-admin)))
             (is (not (nil? inserted-house)))
             (is (= (:houseId inserted-admin) (str (:_id inserted-house))))
@@ -167,6 +169,7 @@
                 (def admin-cookie cookie)
                 (check-body-ok response-body)
                 (is (contains? (first (vals @notification/tokens)) "12345"))
+                (is (contains? @notification/tokens admin-house-id))
             )
         )
     )
