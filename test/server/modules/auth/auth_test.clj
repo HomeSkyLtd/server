@@ -82,7 +82,7 @@
                 inserted-admin (first (db/select "agent" {"username" "admin1"}))
                 inserted-house (first (db/select "house" {}))
             ]
-            (def admin-house-id (keyword (:houseId inserted-admin)))
+            (def admin-house-id (:houseId inserted-admin))
 
             (is (not (nil? inserted-admin)))
             (is (not (nil? inserted-house)))

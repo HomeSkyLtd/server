@@ -87,7 +87,7 @@
                                         :agentId (str (:_id (first agent-obj)))
                                         :permission (:type (first agent-obj))
                                     }
-                                :token {(keyword (:houseId (first agent-obj))) token}
+                                :token { (:houseId (first agent-obj)) token}
                             }
                             {:status 400, :errorMessage "invalid username/password"}
                         )
@@ -126,7 +126,7 @@
 (defn logout
     "Logs user out, sets session to nil"
     [obj house-id _]
-    {:status 200, :session nil, :kill-token {(keyword house-id) (obj :token)}}
+    {:status 200, :session nil, :kill-token { house-id (obj :token)}}
 )
 
 (defn register-controller
@@ -147,7 +147,7 @@
 (defn set-token
     "Change a token to a new value"
     [obj house-id _]
-    (let [parse (fn [key] {key {(keyword house-id) (key obj)}})]
+    (let [parse (fn [key] {key { house-id (key obj)}})]
             (merge {:status 200} (parse :kill-token) (parse :token))))
 
 ; ------------------------------------------------------------------------------
