@@ -20,4 +20,4 @@ Copyright © 2016 FIXME
 
 ## Documentation
 
-[Server HomeCloud](https://google.com)
+[Server HomeCloud](http://ec2-52-67-169-17.sa-east-1.compute.amazonaws.com:8080/)

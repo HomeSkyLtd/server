@@ -7,9 +7,12 @@ var rel_path = '../../target/doc';
 app.use(express.static(path.join(__dirname, rel_path)));
 
 app.get('/', function(req, res) {
+    console.log('GET request');
     res.sendFile(path.join(__dirname, rel_path, 'index.html'));
 });
 
-app.listen(8080, function() {
-	console.log('Listening on port 8080');
+var port = 8080;
+
+app.listen(port, function() {
+	console.log(`Listening on port ${port}`);
 });
