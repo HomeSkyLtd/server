@@ -12,6 +12,11 @@
 	"Return the collection name for a specific house."
 	[houseId] (str "rules_" houseId))
 
+(defn- helper-get-rules
+	"Select type of rules: accepted or not accepted"
+	[houseId accepted]
+	{:status 200 :rules (into [] (map #(dissoc % :_id :accepted) (db/select (coll-name houseId) {:accepted accepted})))}
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 								PUBLIC FUNCTIONS							;;
@@ -34,12 +39,6 @@
 		)
 		{:status 400 :errorMessage "Rules not defined"}
 	)
-)
-
-(defn- helper-get-rules
-	"Select type of rules: accepted or not accepted"
-	[houseId accepted]
-	{:status 200 :rules (into [] (map #(dissoc % :_id :accepted) (db/select (coll-name houseId) {:accepted accepted})))}
 )
 
 (defn get-rules 
