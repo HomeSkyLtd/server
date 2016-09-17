@@ -1,4 +1,4 @@
-(ns ^{:doc "All functions to send notifications to controllers and mobile devices."}
+(ns ^{:doc "Functions to send notifications to controllers and mobile devices."}
 	server.notification
 	(:require [clj-http.client :as client]
 			  [org.httpkit.server :as kit]
