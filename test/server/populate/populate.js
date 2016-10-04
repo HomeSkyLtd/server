@@ -58,15 +58,15 @@ MongoClient.connect(url, function(err, db) {
                                 {
                                     nodeId: 1,
                                     controllerId: "1",
-                                    nodeClass: 'sensor',
+                                    nodeClass: 1,
                                     accepted: 1,
                                     alive: 1,
                                     extra: {name: 'Room sensor', color: 'red'},
                                     dataType: [{
                                         id: 1,
-                                        measureStrategy: 'periodic',
-                                        type: 'int',
-                                        dataCategory: 'temperature',
+                                        measureStrategy: 2,
+                                        type: 1,
+                                        dataCategory: 1,
                                         unit: 'ºC',
                                         range: [-20, 50]
                                     }],
@@ -75,15 +75,15 @@ MongoClient.connect(url, function(err, db) {
                                 {
                                     nodeId: 2,
                                     controllerId: "1",
-                                    nodeClass: 'actuator',
+                                    nodeClass: 2,
                                     accepted: 0,
                                     alive: 1,
                                     extra: {name: 'Room actuator', color: 'blue'},
                                     dataType: [],
                                     commandType: [{
                                         id: 1,
-                                        type: 'bool',
-                                        commandCategory: 'lightSwitch',
+                                        type: 2,
+                                        commandCategory: 4,
                                         unit: '',
                                         range: [0, 1]
                                     }]
@@ -94,18 +94,16 @@ MongoClient.connect(url, function(err, db) {
                                 collection.insertMany([
                                     {
                                         nodeId: 1,
-                                        controllerId: "2",
+                                        controllerId: "1",
                                         data:{
-                                            1: 1.5,
-                                            2: 3
+                                            1: 1.5
                                         }
                                     },
                                     {
                                         nodeId: 2,
-                                        controllerId: "2",
+                                        controllerId: "1",
                                         command:{
-                                            1: 3,
-                                            2: 10
+                                            1: 3
                                         }
                                     }
                                 ], (err, r)=>{
