@@ -61,7 +61,7 @@ MongoClient.connect(url, function(err, db) {
                                     nodeClass: 1,
                                     accepted: 1,
                                     alive: 1,
-                                    extra: {name: 'Room sensor', color: 'red'},
+                                    extra: {name: 'Temperature Sensor', room: 'Kitchen'},
                                     dataType: [{
                                         id: 1,
                                         measureStrategy: 2,
@@ -78,14 +78,37 @@ MongoClient.connect(url, function(err, db) {
                                     nodeClass: 2,
                                     accepted: 0,
                                     alive: 1,
-                                    extra: {name: 'Room actuator', color: 'blue'},
+                                    extra: {name: 'Light Switch', room: 'John\'s Bedroom'},
                                     dataType: [],
                                     commandType: [{
                                         id: 1,
                                         type: 2,
                                         commandCategory: 4,
-                                        unit: '',
+                                        unit: 'on/off',
                                         range: [0, 1]
+                                    }]
+                                }, 
+                                {
+                                    nodeId: 1,
+                                    controllerId: "2",
+                                    nodeClass: 3,
+                                    accepted: 1,
+                                    alive: 1,
+                                    extra: {name: 'Air Conditioner', room: 'Living Room'},
+                                    dataType: [{
+                                        id: 1,
+                                        measureStrategy: 2,
+                                        type: 1,
+                                        dataCategory: 1,
+                                        unit: 'ºC',
+                                        range: [-20, 50]
+                                    }],
+                                    commandType: [{
+                                        id: 1,
+                                        type: 2,
+                                        commandCategory: 4,
+                                        unit: 'ºC',
+                                        range: [-20, 50]
                                     }]
                                 }
                             ], function(err, r) {
@@ -96,14 +119,24 @@ MongoClient.connect(url, function(err, db) {
                                         nodeId: 1,
                                         controllerId: "1",
                                         data:{
-                                            1: 1.5
+                                            1: 22.3
                                         }
                                     },
                                     {
                                         nodeId: 2,
                                         controllerId: "1",
                                         command:{
-                                            1: 3
+                                            1: 1
+                                        }
+                                    },
+                                    {
+                                        nodeId: 1,
+                                        controllerId: "2",
+                                        data: {
+                                            1: 29.8
+                                        },
+                                        command:{
+                                            1: 20.0
                                         }
                                     }
                                 ], (err, r)=>{
