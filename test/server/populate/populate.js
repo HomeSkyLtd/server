@@ -73,6 +73,23 @@ MongoClient.connect(url, function(err, db) {
                                     commandType: []
                                 }, 
                                 {
+                                    nodeId: 3,
+                                    controllerId: "1",
+                                    nodeClass: 1,
+                                    accepted: 1,
+                                    alive: 1,
+                                    extra: {name: 'Presence', room: 'Kitchen'},
+                                    dataType: [{
+                                        id: 1,
+                                        measureStrategy: 2,
+                                        type: 1,
+                                        dataCategory: 3,
+                                        unit: 'on/off',
+                                        range: [0, 1]
+                                    }],
+                                    commandType: []
+                                },
+                                {
                                     nodeId: 2,
                                     controllerId: "1",
                                     nodeClass: 2,
@@ -105,10 +122,17 @@ MongoClient.connect(url, function(err, db) {
                                     }],
                                     commandType: [{
                                         id: 1,
-                                        type: 2,
-                                        commandCategory: 4,
+                                        type: 1,
+                                        commandCategory: 2,
                                         unit: 'ºC',
                                         range: [-20, 50]
+                                    },
+                                    {
+                                        id: 2,
+                                        type: 1,
+                                        commandCategory: 3,
+                                        unit: 'intensity',
+                                        range: [0, 3]
                                     }]
                                 }
                             ], function(err, r) {
@@ -119,14 +143,14 @@ MongoClient.connect(url, function(err, db) {
                                         nodeId: 1,
                                         controllerId: "1",
                                         data:{
-                                            1: 22.3
+                                            1: 30.0
                                         }
                                     },
                                     {
                                         nodeId: 2,
                                         controllerId: "1",
                                         command:{
-                                            1: 1
+                                            1: 0
                                         }
                                     },
                                     {
@@ -136,7 +160,15 @@ MongoClient.connect(url, function(err, db) {
                                             1: 29.8
                                         },
                                         command:{
-                                            1: 20.0
+                                            1: 20.0,
+                                            2: 2
+                                        }
+                                    }, 
+                                    {
+                                        nodeId: 3,
+                                        controllerId: "1",
+                                        data: {
+                                            1: 1
                                         }
                                     }
                                 ], (err, r)=>{
