@@ -65,7 +65,7 @@ MongoClient.connect(url, function(err, db) {
                                     dataType: [{
                                         id: 1,
                                         measureStrategy: 2,
-                                        type: 1,
+                                        type: 3,
                                         dataCategory: 1,
                                         unit: 'ºC',
                                         range: [-20, 50]
@@ -82,7 +82,7 @@ MongoClient.connect(url, function(err, db) {
                                     dataType: [{
                                         id: 1,
                                         measureStrategy: 2,
-                                        type: 1,
+                                        type: 2,
                                         dataCategory: 3,
                                         unit: 'on/off',
                                         range: [0, 1]
@@ -115,14 +115,14 @@ MongoClient.connect(url, function(err, db) {
                                     dataType: [{
                                         id: 1,
                                         measureStrategy: 2,
-                                        type: 1,
+                                        type: 3,
                                         dataCategory: 1,
                                         unit: 'ºC',
                                         range: [-20, 50]
                                     }],
                                     commandType: [{
                                         id: 1,
-                                        type: 1,
+                                        type: 3,
                                         commandCategory: 2,
                                         unit: 'ºC',
                                         range: [-20, 50]
