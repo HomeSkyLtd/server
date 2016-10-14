@@ -28,7 +28,7 @@
 (defn init-tokens
 	"Test function to initialize tokens for the developers' devices' tokens"
 	[]
-	(let [token1 "eEHWFv7EdA0:APA91bGO8WmaMpionMdkoOQ9LLouVaL7K3E9WhN6ztRIha2Xcl1vDfTokQotTeHr3QzimryG5dUwlu02xdkb2YbeK0eTal5cGfkca4CC1lePsOkMqR71W-9dkm47jAfKQwhOHnZejTT1"
+	(let [token1 "fKIubWDcHJM:APA91bGCSu504w-uyGer3BkFY2cgyzW9omXGLwmW_hChGFiBouIB9DcaHKp1c9ZmFQaAiGXqCjR4dEakPnwFu6Qi2ymfteO0T7zOqWKx2BDwo9kEJDitoVFmhbXaUzjl5utnCs7m_xN8"
 		  token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
 		  house-tokens {1 #{token1 token2}}]
 		(reset! tokens house-tokens)
@@ -51,7 +51,7 @@
 	"Send a notification in one of the threads of the pool."
 	[houseId msg]
 	(let [house-tokens (@tokens houseId)
-		  auth-key "key=AIzaSyClArUOQgE1rH2ff3DELo6vvmQuWTZ68QA"
+		  auth-key "key=AIzaSyCx7vgnhSyCAwqLaFC59w6Axsmqq5Yrz1M"
 		  url "https://fcm.googleapis.com/fcm/send"
 		  headers {"Authorization" auth-key "Content-Type" "application/json"}
 		  result (promise)]
