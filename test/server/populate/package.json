@@ -1,0 +1,15 @@
+{
+  "name": "populate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "populate.js",
+  "dependencies": {
+    "mongodb": "^2.2.9"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "",
+  "license": "ISC"
+}

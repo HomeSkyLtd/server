@@ -2,11 +2,16 @@
   (:require [clojure.test :refer :all]
             [server.modules.state.state :as state]
             [server.db :as db]
+            [server.notification :as notification]
             (monger [db :as md] [collection :as mc])))
 
 (deftest test-app
 
   (md/drop-db db/db)
+  ;;
+  ;;  Initialize tokens in Notification
+  ;;
+  (notification/init-tokens)
 
   (testing "inserting new data ok"
     (let [obj {:data [
@@ -14,7 +19,7 @@
                     :dataId 1 
                     :value 13
                     :timestamp 1471531800}]} houseId 1 controllerId 1]
-      (is (= (state/new-data obj houseId controllerId) {:status 200}))))
+      (is (= 200 (:status (state/new-data obj houseId controllerId))))))
 
   (testing "inserting new data without houseId"
     (let [obj {:data [
@@ -47,7 +52,7 @@
                     :commandId 1 
                     :value 20 
                     :timestamp 1471531800}]} houseId 1 controllerId 1]
-      (is (= (state/new-command obj houseId controllerId) {:status 200}))))
+      (is (= 200 (:status (state/new-command obj houseId controllerId))))))
 
   (testing "inserting new command without houseId"
     (let [obj {:command [
@@ -75,18 +80,19 @@
 
 
   (testing "inserting new action ok"
-    (let [obj {:action [
-                  {:nodeId 3 
-                    :commandId 1 
-                    :value 20}]} houseId 1 agentId 4]
-      (is (= (state/new-action obj houseId agentId) {:status 200}))))
+    (let [houseId 1 agentId 4 
+          obj {:action {:controllerId 4
+                        :nodeId 3 
+                        :commandId 1 
+                        :value 20}}]
+      (is (= {:status 200} (state/new-action obj houseId agentId)))))
 
   (testing "inserting new action without houseId"
-    (let [obj {:action [
-                  {:nodeId 1 
+    (let [obj {:action {:nodeId 1 
+                    :controllerId 1
                     :commandId 1 
                     :value 20 
-                    :timestamp 1471531800}]} houseId nil]
+                    :timestamp 1471531800}} houseId nil]
       (is (= (state/new-action obj houseId nil) {:status 400 :errorMessage "houseId not defined"}))))
 
   (testing "inserting new action without action"
@@ -94,10 +100,10 @@
       (is (= (state/new-action obj houseId nil) {:status 400 :errorMessage "Action not defined"}))))  
 
   (testing "inserting new action without nodeId"
-    (let [obj {:action [
-                  {:commandId 1 
+    (let [obj {:action {:commandId 1 
+                    :controllerId 1
                     :value 20 
-                    :timestamp 1471531800}]} houseId 1]
+                    :timestamp 1471531800}} houseId 1]
       (is (= (state/new-action obj houseId nil) {:status 400 :errorMessage "Define nodeId, commandId and value."}))))
 
 
@@ -110,7 +116,7 @@
                             {:nodeId 1 :dataId 2 :value 22 :timestamp 1471531802},
                             {:nodeId 2 :dataId 2 :value 201 :timestamp 1471531803}
                             ]}]
-      (is (= (state/new-data obj houseId controllerId) {:status 200}))))
+      (is (= 200 (:status (state/new-data obj houseId controllerId))))))
 
   (testing "get house state"
     (let [houseId 1 obj {:state [{:command {:1 20}, :controllerId 1, :data {:1 13}, :nodeId 3}
@@ -119,4 +125,30 @@
                    {:controllerId 1, :data {:1 200, :2 201}, :nodeId 2}],
            :status 200}]
     (is (= (state/get-house-state nil houseId nil) obj))))
-  )
+
+
+
+
+
+  (testing "mock request from controller to server"
+    (let [houseId 1
+          controllerId 1
+          obj {:result 1 :action {:nodeId 1 :commandId 1 :value 1}}]
+      (is (= {:status 200} (state/send-action-result obj houseId controllerId)))))
+
+  (testing "send notification to an invalid token"
+    (let [houseId 123
+          controllerId 123
+          obj {:result 1 :action {:nodeId 1 :commandId 1 :value 1}}
+          invalidToken "ThisIsAnInvalidToken"
+          sleep (* 2 1000)]
+      (swap! notification/tokens assoc houseId #{invalidToken})
+      (state/send-action-result obj houseId controllerId)
+      (loop [secs 0] 
+        (when 
+          (and (contains? (@notification/tokens houseId) invalidToken) (< secs sleep))
+          (Thread/sleep 1000)
+          (recur (inc secs))))
+      (is (not (contains? (@notification/tokens houseId) invalidToken)))))
+
+)

@@ -2,18 +2,26 @@
   (:use [clojure.test])
   (:require
       [server.db :as db]
-      [server.handler :as handler :only [app]]
+      [server.handler :as handler :only [app tokens]]
       [server.modules.auth.auth :as auth :only [get-agents]]
+      [server.notification :as notification :only [tokens]]
       [ring.mock.request :as mock]
       [clojure.data.json :as json]
       [clojure.string :only [split join] :as str]
       (monger [core :as mg] [collection :as mc] [result :as res] [db :as md]))
+  (:import org.bson.types.ObjectId)
 )
 
 (defn- setup-database-test-handler []
     (md/drop-db db/db)
-    (db/insert "agent" {:username "controller1", :password "AYag$s+h8FdzfVnY=$TO2dl9of6ilh5KAdZ3h9cASn3Kk=",
-        :type "controller", :controllerId 1, :houseId ""}) ;hash = ctrlpass
+    (let 
+        [
+            inserted 
+                (db/insert "agent" {:username "controller1", :password "AYag$s+h8FdzfVnY=$TO2dl9of6ilh5KAdZ3h9cASn3Kk=",
+                :type "controller", :houseId ""} :return-inserted true) ;hash = ctrlpass
+        ]
+        (def controller-id (str (:_id inserted)))
+    )
 )
 
 (defn- setup-database-test-db []
@@ -27,9 +35,9 @@
     (db/insert "agent" {:username "user2", :password "userpass2",
         :type "user", :houseId "1"})
     (db/insert "agent" {:username "controller1", :password "ctrlpass1",
-        :type "controller", :controllerId 1, :houseId "1"})
+        :type "controller", :houseId "1"})
     (db/insert "agent" {:username "controller2", :password "ctrlpass2",
-        :type "controller", :controllerId 2, :houseId "2"})
+        :type "controller", :houseId "2"})
 )
 
 (defn- process-header [header-str]
@@ -54,6 +62,7 @@
 
 (deftest test-handler-functions
     (setup-database-test-handler)
+    (swap! notification/tokens {})
 
     (testing "unauthorized - not logged in"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
@@ -73,6 +82,8 @@
                 inserted-admin (first (db/select "agent" {"username" "admin1"}))
                 inserted-house (first (db/select "house" {}))
             ]
+            (def admin-house-id (:houseId inserted-admin))
+
             (is (not (nil? inserted-admin)))
             (is (not (nil? inserted-house)))
             (is (= (:houseId inserted-admin) (str (:_id inserted-house))))
@@ -147,7 +158,8 @@
                     :params {"payload" (json/write-str {
                         "function" "login",
                         "username" "admin1",
-                        "password" "mypass"})}))
+                        "password" "mypass",
+                        "token" "12345"})}))
                 response-body (json/read-str (:body response) :key-fn keyword)
                 set-cookie-value (first ((:headers response) "Set-Cookie"))
             ]
@@ -156,6 +168,8 @@
                 (is (= (first cookie) "ring-session"))
                 (def admin-cookie cookie)
                 (check-body-ok response-body)
+                (is (contains? (first (vals @notification/tokens)) "12345"))
+                (is (contains? @notification/tokens admin-house-id))
             )
         )
     )
@@ -195,11 +209,11 @@
                     :params {"payload" (json/write-str
                         {
                             "function" "registerController",
-                            "controllerId" 1
+                            "controllerId" controller-id
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)
-                updated-controller (first (db/select "agent" {"controllerId" 1}))
+                updated-controller (first (db/select "agent" {:_id (ObjectId. controller-id)}))
                 admin (first (db/select "agent" {"username" "admin1"}))
             ]
             (check-body-ok response-body)
@@ -212,7 +226,7 @@
                     :params {"payload" (json/write-str
                         {
                             "function" "registerController",
-                            "controllerId" 2
+                            "controllerId" "2"
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)
@@ -222,15 +236,17 @@
     )
     (testing "logging out admin account"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
-            :params {"payload" (json/write-str {"function" "logout"})}
+            :params {"payload" (json/write-str {"function" "logout", "token" "12345"})}
             :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
             ))) :key-fn keyword)]
+
             (check-body-ok response-body)
+            (is (empty? (first (vals @notification/tokens))))
         )
     )
     (testing "logging out twice in a row"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
-            :params {"payload" (json/write-str {"function" "logout"})}
+            :params {"payload" (json/write-str {"function" "logout", "token" "12345"})}
             :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
             ))) :key-fn keyword)]
             (check-body-error response-body 403)
@@ -242,7 +258,8 @@
                     :params {"payload" (json/write-str {
                         "function" "login",
                         "username" "user1",
-                        "password" "userpass"})}))
+                        "password" "userpass",
+                        "token" "67891"})}))
                 response-body (json/read-str (:body response) :key-fn keyword)
                 set-cookie-value (first ((:headers response) "Set-Cookie"))
             ]
@@ -251,7 +268,23 @@
                 (is (= (first cookie) "ring-session"))
                 (def user-cookie cookie)
                 (check-body-ok response-body)
+                (is (some #(contains? % "67891") (vals @notification/tokens)))
             )
+        )
+    )
+    (testing "set token"
+        (let [
+                response (handler/app (assoc (mock/request :post "/")
+                    :params {"payload" (json/write-str {
+                        "function" "setToken",
+                        "kill-token" "67891"
+                        "token" "67890"})}
+                    :headers {"cookie" (str (first user-cookie) "=" (second user-cookie))}))
+                response-body (json/read-str (:body response) :key-fn keyword)
+            ]
+            (check-body-ok response-body)
+            (is (some #(contains? % "67890") (vals @notification/tokens)))
+            (is (every? #(not (contains? % "67891")) (vals @notification/tokens)))
         )
     )
     (testing "triggering user function with proper permissions"
@@ -264,10 +297,11 @@
     )
     (testing "logging out user account"
         (let [response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
-            :params {"payload" (json/write-str {"function" "logout"})}
+            :params {"payload" (json/write-str {"function" "logout", "token" "67890"})}
             :headers {"cookie" (str (first user-cookie) "=" (second user-cookie))}
             ))) :key-fn keyword)]
             (check-body-ok response-body)
+            (is (every? empty? (vals @notification/tokens)))
         )
     )
     (testing "logging in as controller"

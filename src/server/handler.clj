@@ -1,6 +1,6 @@
-(ns server.handler
+(ns ^{:doc "Receive requests and call all modules' functions"}
+	server.handler
 	(:require
-		[server.utils :as utils]
 		[compojure.core :refer :all]
 		[compojure.route :as route]
 		[ring.middleware.session :refer [wrap-session]]
@@ -14,61 +14,68 @@
 		[server.modules.auth.auth :as auth]
 		[server.modules.node.node :as node]
 		[server.modules.state.state :as state]
-		[server.modules.rule.rule :as rule]))
+		[server.modules.rule.rule :as rule]
+		[server.notification :as notification]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; STATE REFERENCES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; keeps track of active websockets channels
-(def agent-channel (atom {}))
-
-; keeps session data
-(def session-storage (atom {}))
+(def ^{:doc "Keeps session data"} session-storage (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLER CALLBACK FUNCTIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Test handler - returns status 200
-(defn test-handler [_ _ _] {:status 200})
+(defn test-handler 
+	"Test handler - returns status 200"
+	[_ _ _] {:status 200})
 
 
-(def ^:private function-handlers {
-	 "newData" state/new-data,
-	 "newCommand" state/new-command,
-	 "newAction" state/new-action,
-	 "getHouseState" state/get-house-state,
+(def ^:private ^{:doc "Map of functions to their names."}
+	function-handlers {
+		"newData" state/new-data,
+		"newCommand" state/new-command,
+		"newAction" state/new-action,
+		"getHouseState" state/get-house-state,
+		"actionResult" state/send-action-result,
 
-	"newRules" rule/new-rules,
-	"getRules" rule/get-rules,
-	"getLearntRules" rule/get-learnt-rules,
+		"newRules" rule/new-rules,
+		"getRules" rule/get-rules,
+		"getLearntRules" rule/get-learnt-rules,
 
-	"newDetectedNodes" node/new-detected-nodes,
-	"setNodeExtra" node/set-node-extra,
-	"getNodesInfo" node/get-nodes-info,
-	"acceptNode" node/accept-node,
-    "removeNode" node/remove-node,
-	"setNodeState" node/set-node-state,
+		"newDetectedNodes" node/new-detected-nodes,
+		"setNodeExtra" node/set-node-extra,
+		"getNodesInfo" node/get-nodes-info,
+		"acceptNode" node/accept-node,
+	    "removeNode" node/remove-node,
+		"setNodeState" node/set-node-state,
 
-	"login" auth/login,
-	"logout" auth/logout,
-	"newUser" auth/new-user,
-	"newAdmin" auth/new-admin,
-	"registerController" auth/register-controller,
+		"login" auth/login,
+		"logout" auth/logout,
+		"newUser" auth/new-user,
+		"newAdmin" auth/new-admin,
+		"registerController" auth/register-controller,
+		"setToken" auth/set-token,
 
-	"testBase" test-handler,
-	"testUser" test-handler,
-	"testAdmin" test-handler,
-	"testController" test-handler
+		"testBase" test-handler,
+		"testUser" test-handler,
+		"testAdmin" test-handler,
+		"testController" test-handler,
+
+		"notifyNewAction" notification/notify-new-action,
+		"notifyNewRules" notification/notify-new-rules,
+		"notifyAcceptedNode" notification/notify-accepted-node,
+		"notifyRemovedNode" notification/notify-removed-node
 	})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLER CALLBACK FUNCTIONS - PERMISSIONS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Granting base permission to a function means anyone can access it
-(def permissions
+
+(def ^{:doc "Granting base permission to a function means anyone can access it"}
+	permissions
 	{
 		"base" 1,
 		"user" 2,
@@ -76,33 +83,41 @@
 		"admin" 8
 	})
 
-(def ^:private function-permissions {
-	 "newData" (permissions "controller"),
-	 "newCommand" (permissions "controller"),
-	 "newAction" (permissions "user"),
-	 "getHouseState" (permissions "user"),
+(def ^:private ^{:doc "List of permissions to access each function."}
+	function-permissions {
+		"newData" (permissions "controller"),
+		"newCommand" (permissions "controller"),
+		"newAction" (bit-or (permissions "user") (permissions "admin")),
+		"getHouseState" (bit-or (permissions "user") (permissions "admin")),
+		"actionResult" (permissions "controller"),
 
-	"newRules" (bit-or (permissions "admin") (permissions "user")),
-	"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
-	"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
+		"newRules" (bit-or (permissions "admin") (permissions "user")),
+		"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
+		"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
 
-	"newDetectedNodes" (permissions "controller"),
-	"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
-	"getNodesInfo" (bit-or (permissions "user") (permissions "admin")),
-	"acceptNode" (bit-or (permissions "user") (permissions "admin")),
-	"removeNode" (bit-or (permissions "user") (permissions "admin")),
-    "setNodeState" (permissions "controller"),
+		"newDetectedNodes" (permissions "controller"),
+		"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
+		"getNodesInfo" (bit-or (permissions "user") (permissions "admin")),
+		"acceptNode" (bit-or (permissions "user") (permissions "admin")),
+		"removeNode" (bit-or (permissions "user") (permissions "admin")),
+	    "setNodeState" (permissions "controller"),
 
-	"login" (permissions "base"),
-	"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
-	"newUser" (permissions "admin"),
-	"newAdmin" (permissions "base"),
-	"registerController" (permissions "admin"),
+		"login" (permissions "base"),
+		"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
+		"newUser" (permissions "admin"),
+		"newAdmin" (permissions "base"),
+		"registerController" (permissions "admin"),
+		"setToken" (bit-or (permissions "admin") (permissions "user")),
 
-	"testBase" (permissions "base"),
-	"testUser" (permissions "user"),
-	"testAdmin" (permissions "admin"),
-	"testController" (permissions "controller")
+		"testBase" (permissions "base"),
+		"testUser" (permissions "user"),
+		"testAdmin" (permissions "admin"),
+		"testController" (permissions "controller"),
+
+		"notifyNewAction" (bit-or (permissions "user") (permissions "admin")),
+		"notifyNewRules" (bit-or (permissions "user") (permissions "admin")),
+		"notifyAcceptedNode" (bit-or (permissions "user") (permissions "admin")),
+		"notifyRemovedNode" (bit-or (permissions "user") (permissions "admin"))
 	})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -115,23 +130,51 @@
 	those values will be used when constructing the response."
 	([response-map status message]
 		(json/write-str (merge {:status status, :errorMessage message} response-map)))
-	([status message] (build-response-json {} status message))
-	([response-map] (build-response-json response-map 500 ""))
+	([status message] 
+		(build-response-json {} status message))
+	([response-map] 
+		(build-response-json response-map 500 ""))
 )
 
-(defn- get-session-permission [session]
+(defn- get-session-permission 
+	"Check if there is a permission in current session."
+	[session]
 	(if (nil? (:permission session))
 		0
 		(permissions (:permission session))
 	)
 )
 
+(defn- find-keys [map value]
+	"Returns the occurrences of the key related to value in map"
+	(let [values
+			(for [pair map]
+				(if (= (second pair) value)
+					(first pair)
+				)
+			)]
+		(filter #(not (nil? %)) values)
+	)
+)
+
+(defn- build-response
+	"Build response with status and body"
+	([status body]
+		{:status status
+			:headers {"Content-Type" "text/html"}
+			:body body})
+	([status]
+		{:status status
+			:headers {"Content-Type" "text/html"}}))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANDLERS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; POST handler
-(defn- handler [{params :params session :session}]
+
+(defn- handler 
+	"POST requests handler"
+	[{params :params session :session}]
 	(try-let
 		[
 			params_map (json/read-str (params "payload") :key-fn keyword)
@@ -141,93 +184,119 @@
 			houseId (:houseId session)
 			agentId (:agentId session)
 		]
-		; (println session)
 		(if (or (nil? function) (nil? (function-handlers function)))
 			(build-response-json 400 "No function found!")
-			(cond
-				;If not authorized due to mismatched authorization
-				(zero? (bit-and permission (function-permissions function)))
-					(if (= (permissions "base") permission)
-						(build-response-json 403 "User not logged in")
-						(build-response-json 403 "Unauthorized operation")
-					)
-				;If everything OK
-				:else
-					(let [	result ((function-handlers function) obj houseId agentId)
-							session (:session result)]
-						(if (contains? result :session)
-							{:status 200 :body (build-response-json (dissoc result :session)) :session session}
-							(build-response-json result)
+			;If not authorized due to mismatched authorization
+			(if (zero? (bit-and permission (function-permissions function)))
+				(if (= (permissions "base") permission)
+					(build-response-json 403 "User not logged in")
+					(build-response-json 403 "Unauthorized operation")
+				)
+				(let [result ((function-handlers function) obj houseId agentId)
+					  session (:session result)
+					  token (:token result)
+					  kill-token (:kill-token result)]
+					
+					; Handle token creation / destruction
+					(if (not (nil? (first (vals token))))
+						(if (contains? @notification/tokens (first (keys token)))
+							(swap! notification/tokens assoc 
+								(first (keys token)) 
+								(conj (@notification/tokens (first (keys token))) (first (vals token)))
+							)
+							(swap! notification/tokens assoc
+								(first (keys token))
+								#{(first (vals token))}
+							)
 						)
 					)
+					(if (not (nil? kill-token))
+						(if (contains? @notification/tokens (first (keys kill-token)))
+							(swap! notification/tokens assoc 
+								(first (keys kill-token)) 
+								(disj (@notification/tokens (first (keys kill-token))) (first (vals kill-token)))
+							)
+							;(println "Warning: trying to delete inexisting token")
+						)
+					)
+					(if (contains? result :session)
+						{:status 200 :body (build-response-json (dissoc result :session :token :kill-token)) :session session}
+						(build-response-json (dissoc result :token :kill-token))
+					)
+				)
 			)
 		)
 		(catch Exception e (build-response-json 400 (str "Invalid POST data caused " e)))
 	)
 )
 
-; Websockets handler
-(defn ws-handler [request]
+(defn ws-handler 
+	"Web Sockets handler"
+	[request]
 	(let
 		[
 			session (:session request)
-			houseId (:houseId session)
-			agentId (:agentId session)
+			house-id (:houseId session)
+			agent-id (:agentId session)
 			permission (bit-or (permissions "base") (get-session-permission session))
 		]
-		(cond
-			;If not authorized due to mismatched authorization
-			(zero? (bit-and permission (permissions "controller")))
-				(if (= (permissions "base") permission)
-					{:status 403 :headers {"X-WebSocket-Reject-Reason" "Not logged in"}}
-					{:status 403 :headers {"X-WebSocket-Reject-Reason" "Unauthorized operation"}}
-				)
-			;If everything OK
-			:else
-				(kit/with-channel request channel
-					; (println request)
-					(swap! agent-channel assoc agentId channel)
-					(println "Received websockets call")
-					(println (str "active channels: " (count @agent-channel)))
-					(println @agent-channel)
-					(kit/on-close channel (fn [status]
-						(swap! agent-channel dissoc (first (utils/find-keys @agent-channel channel)))
-						(println "channel closed: " status)
-						(println (str "active channels: " (count @agent-channel)))
-					))
-					; (on-receive channel (fn [data] ;; echo it back
-					;                   (println (str "Received data: " data))
-					;                   (send! channel data)))
-				)
-		)
-	)
-)
+		;If not authorized due to mismatched authorization
+		(if (zero? (bit-and permission (permissions "controller")))
+			(if (= (permissions "base") permission)
+				{:status 403 :headers {"X-WebSocket-Reject-Reason" "Not logged in"}}
+				{:status 403 :headers {"X-WebSocket-Reject-Reason" "Unauthorized operation"}}
+			)
+			(kit/with-channel request channel
+				(swap! notification/agent-channel assoc agent-id channel)
+				;(println "Received websockets call")
+				;(println (str "active channels: " (count @notification/agent-channel)))
+				;(println @notification/agent-channel)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PUBLIC FUNCTIONS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn send-websocket-notification! [controller-id message]
-	"
-		Sends message to controller-id through a websockets channel. Returns true
-		if successful, and false otherwise.
-	"
-	(println @agent-channel)
-	(let [channel (@agent-channel controller-id)]
-		(if (nil? channel)
-			false
-			(do
-				(kit/send! channel message)
-				true
+				;Send pending notifications, if any
+				(notification/send-pending-notifications! agent-id)
+
+				(kit/on-close channel (fn [status]
+					(swap! notification/agent-channel dissoc (first (find-keys @notification/agent-channel channel)))
+					;(println "channel closed: " status)
+					;(println (str "active channels: " (count @notification/agent-channel)))
+				))
+				; (on-receive channel (fn [data] ;; echo it back
+				;                   (println (str "Received data: " data))
+				;                   (send! channel data)))
 			)
 		)
 	)
 )
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SERVER CONFIGURATION
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defroutes app-routes
-	(GET "/" [] (utils/build-response 200 "Server running"))
+	(GET "/" [] (build-response 200 "Server running"))
 	(POST "/" request (handler request))
 	(GET "/ws" request (ws-handler request))
   	(route/not-found "Not Found"))
@@ -235,7 +304,7 @@
 (def app
 	(-> app-routes
 		(reload/wrap-reload)
-		(wrap-session {:cookie-attrs {:max-age 20} :store (ring.middleware.session.memory/memory-store session-storage)})
+		(wrap-session {:cookie-attrs {:max-age 3600} :store (ring.middleware.session.memory/memory-store session-storage)})
 		(wrap-params)))
 
 (defn -main[]
