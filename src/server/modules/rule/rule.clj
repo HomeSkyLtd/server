@@ -5,7 +5,7 @@
 	(:require [server.db :as db]
 			  [server.notification :as notification])
     (:import 
-        [org.rosuda.REngine]
+        [org.rosuda.REngine REXP RList REXPString REXPInteger]
         [org.rosuda.REngine.Rserve RConnection])
     )
 
@@ -21,10 +21,17 @@
 	[houseId accepted]
 	{:status 200 :rules (into [] (map #(dissoc % :_id :accepted) (db/select (coll-name houseId) {:accepted accepted})))}
 )
+
 (defn- get-nodes
-    "Returns a list of nodes"
+    "Returns a list of accepted and online nodes"
     [house-id]
-    (db/select (str "node_" house-id) { } :one false))
+    (db/select (str "node_" house-id) { :accepted 1 :alive 1 } :one false))
+
+(defn- get-states
+    "Gets all data from house"
+    [house-id]
+    (db/select (str "all_states_" house-id))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 								PUBLIC FUNCTIONS							;;
@@ -111,16 +118,46 @@
 	)
 )
 
+(defn- ids-to-map [themap map-key type key-prefix]
+    (reduce #(assoc %1 (str key-prefix (:id %2)) {:type type :metadata %2 }) 
+        {} (map-key themap))
+)
+
 (defn learn-rules [houseId]
     "Learn new rules using house data"
-    nil
+    (let [nodes-info (reduce #(merge %1 
+        (let [prefix (str (:controllerId %2) "." (:nodeId %2) ".")] 
+            (merge (ids-to-map %2 :dataType "data" prefix) 
+                   (ids-to-map %2 :commandType "command" prefix))
+        )) {} (get-nodes houseId))]
+        (reduce #(assoc %1 %2 
+
+            ) (reduce-kv #(assoc %1 %2 []) {} nodes-info) (get-states houseId))
     )
+)
 
 (def c (new RConnection))
 (def d (. c eval "rnorm(10)"))
 (def e (. d asDoubles))
-(println (first e))
-(println (rest e))
 
+;(. c eval "print(10)")
+;(println (first e))
+;(println (rest e))
+(def col-names (into-array String ["col1" "col2" "col3"]))
 
-(println (get-nodes "58061ca8a567d82155003540"))
+(defn- to-int [coll]
+    (map #(int %) coll)
+)
+
+(def row1 (int-array [1 2 3]))
+(def row2 (int-array [2 4 6]))
+(def row3 (int-array [4 8 12]))
+(def data-frame (REXP/createDataFrame (new RList 
+    (into-array REXP [(new REXPInteger row1) (new REXPInteger row2) (new REXPInteger row3)])
+    col-names
+    )))
+
+(.assign c "testFrame" data-frame)
+(.voidEval c "print(testFrame)")
+;(def )
+(println (learn-rules "58061ca8a567d82155003540"))
