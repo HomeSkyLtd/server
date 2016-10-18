@@ -76,7 +76,7 @@
                     (nil? agent-obj)
                         {:status 500 :errorMessage "could not retrieve agent data"}
                     (empty? agent-obj)
-                        {:status 400, :errorMessage "invalid username/password"}
+                        {:status 403, :errorMessage "invalid username/password"}
                     :else
                         (if (passhash/check (:password obj) (:password (first agent-obj)))
                             {
@@ -89,7 +89,7 @@
                                     }
                                 :token { (:houseId (first agent-obj)) token}
                             }
-                            {:status 400, :errorMessage "invalid username/password"}
+                            {:status 403, :errorMessage "invalid username/password"}
                         )
                 )
             )

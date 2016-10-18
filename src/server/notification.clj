@@ -28,9 +28,8 @@
 (defn init-tokens
 	"Test function to initialize tokens for the developers' devices' tokens"
 	[]
-	(let [token1 "fKIubWDcHJM:APA91bGCSu504w-uyGer3BkFY2cgyzW9omXGLwmW_hChGFiBouIB9DcaHKp1c9ZmFQaAiGXqCjR4dEakPnwFu6Qi2ymfteO0T7zOqWKx2BDwo9kEJDitoVFmhbXaUzjl5utnCs7m_xN8"
-		  token2 "cpHCmaffX0Q:APA91bEIEd4L7vBTMm5D4nT2V7sidA519z5LqplzIlxrG0Et_UYXXwu0rFg3bQJ412Hrcuqwk4SbtmTywC7IpCYfxyLdBA8BpTWyuRB3B7deWJv8jYYNd6_Zjhgjth2qIeFQQeSJ5j1r"
-		  house-tokens {1 #{token1 token2}}]
+	(let [token1 "c5l32T5w01o:APA91bHs4fI8QJTkcimkU4HVrMscJ1nNsaszuEYmerp0AZIIXIQStbTp1uQOg5J6JdATkGfNvg3lWBevyd6ezjE_TPb4-1vMhYDtemSu8ttH36DwxyB0W7JajdmlX6qyCjoJ5zYnWOkN"
+	          house-tokens {1 #{token1}}]
 		(reset! tokens house-tokens)
 	)
 )
