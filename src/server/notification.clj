@@ -55,9 +55,7 @@
 		  headers {"Authorization" auth-key "Content-Type" "application/json"}
 		  result (promise)]
 		(doseq [house-token house-tokens]
-			(println "Sending..........")
 			(future (deliver result (client/post url {:body (build-msg house-token msg) :headers headers})))
-			(println @result)
 			(if (= 0 ((json/read-str (:body @result)) "success"))
 				(swap! tokens #(disj (% houseId) house-token))
 			)
@@ -69,10 +67,6 @@
 (defn- send-notification
 	"Send notifications in a pool of threads."
 	[houseId msg]
-	(println "Ready to send.......")
-	(println @thread-pool)
-	(println @tokens)
-	(println "")
 	(let [timeout (* 10 1000)]
 		(send thread-pool (fn [_] (send-on-thread houseId msg)))
 	)
