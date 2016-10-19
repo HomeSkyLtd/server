@@ -14,6 +14,8 @@
                  [crypto-password "0.2.0"]
                  [try-let "1.1.0"]
                  [org.slf4j/slf4j-nop "1.7.12"]
+                 [org.rosuda.REngine/REngine "2.1.0"]
+                 [org.rosuda.REngine/Rserve "1.8.1"]
                  [clj-http "3.2.0"]]
   :main server.handler
   :plugins [[lein-ring "0.9.7"]
