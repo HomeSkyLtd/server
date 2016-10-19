@@ -43,12 +43,13 @@
 		"newRules" rule/new-rules,
 		"getRules" rule/get-rules,
 		"getLearntRules" rule/get-learnt-rules,
+		"acceptRule" rule/accept-rule,
 
 		"newDetectedNodes" node/new-detected-nodes,
 		"setNodeExtra" node/set-node-extra,
 		"getNodesInfo" node/get-nodes-info,
 		"acceptNode" node/accept-node,
-	    "removeNode" node/remove-node,
+	    	"removeNode" node/remove-node,
 		"setNodeState" node/set-node-state,
 
 		"login" auth/login,
@@ -94,13 +95,14 @@
 		"newRules" (bit-or (permissions "admin") (permissions "user")),
 		"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
 		"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
+		"acceptRule" (bit-or (permissions "admin") (permissions "user"))
 
 		"newDetectedNodes" (permissions "controller"),
 		"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
 		"getNodesInfo" (bit-or (permissions "user") (permissions "admin")),
 		"acceptNode" (bit-or (permissions "user") (permissions "admin")),
 		"removeNode" (bit-or (permissions "user") (permissions "admin")),
-	    "setNodeState" (permissions "controller"),
+	    	"setNodeState" (permissions "controller"),
 
 		"login" (permissions "base"),
 		"logout" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),

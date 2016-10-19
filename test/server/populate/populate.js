@@ -134,6 +134,22 @@ MongoClient.connect(url, function(err, db) {
                                         unit: 'intensity',
                                         range: [0, 3]
                                     }]
+                                },
+                                {
+                                        nodeId: 4,
+                                        controllerId: "1",
+                                        nodeClass: 2,
+                                        accepted: 0,
+                                        alive: 1,
+                                        extra: {name: 'Light Switch', room: 'Bathroom'},
+                                        dataType: [],
+                                        commandType: [{
+                                            id: 1,
+                                            type: 2,
+                                            commandCategory: 4,
+                                            unit: 'on/off',
+                                            range: [0, 1]
+                                    }]
                                 }
                             ], function(err, r) {
                                 if (err) throw err;
