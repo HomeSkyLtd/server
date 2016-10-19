@@ -3,7 +3,11 @@
 			please them."}
 	server.modules.rule.rule
 	(:require [server.db :as db]
-			  [server.notification :as notification]))
+			  [server.notification :as notification])
+    (:import 
+        [org.rosuda.REngine REXP RList REXPString REXPInteger]
+        [org.rosuda.REngine.Rserve RConnection])
+    )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 								PRIVATE FUNCTIONS							;;
@@ -16,6 +20,17 @@
 	"Select type of rules: accepted or not accepted"
 	[houseId accepted]
 	{:status 200 :rules (into [] (map #(dissoc % :_id :accepted) (db/select (coll-name houseId) {:accepted accepted})))}
+)
+
+(defn- get-nodes
+    "Returns a list of accepted and online nodes"
+    [house-id]
+    (db/select (str "node_" house-id) { :accepted 1 :alive 1 } :one false))
+
+(defn- get-states
+    "Gets all data from house"
+    [house-id]
+    (db/select (str "all_states_" house-id))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
