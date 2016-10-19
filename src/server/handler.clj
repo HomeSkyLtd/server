@@ -43,6 +43,7 @@
 		"newRules" rule/new-rules,
 		"getRules" rule/get-rules,
 		"getLearntRules" rule/get-learnt-rules,
+		"removeRule" rule/remove-rule
 
 		"newDetectedNodes" node/new-detected-nodes,
 		"setNodeExtra" node/set-node-extra,
@@ -94,6 +95,7 @@
 		"newRules" (bit-or (permissions "admin") (permissions "user")),
 		"getRules" (bit-or (permissions "admin") (permissions "user") (permissions "controller")),
 		"getLearntRules" (bit-or (permissions "admin") (permissions "user")),
+		"removeRule" (bit-or (permissions "admin") (permissions "user")),
 
 		"newDetectedNodes" (permissions "controller"),
 		"setNodeExtra" (bit-or (permissions "user") (permissions "admin")),
