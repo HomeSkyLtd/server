@@ -30,7 +30,7 @@
 (defn- get-states
     "Gets all data from house"
     [house-id]
-    (db/select (str "all_states_" house-id))
+    (db/select (str "all_states_" house-id) {} :one false)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -118,62 +118,49 @@
 	)
 )
 
-(defn- ids-to-map [themap map-key type key-prefix]
-    (reduce #(assoc %1 (str key-prefix (:id %2)) {:type type :metadata %2 }) 
-        {} (map-key themap))
-)
-
-
-(def c (new RConnection))
-(def d (. c eval "rnorm(10)"))
-(def e (. d asDoubles))
+;(def d (. c eval "rnorm(10)"))
+;(def e (. d asDoubles))
 
 ;(. c eval "print(10)")
 ;(println (first e))
 ;(println (rest e))
-(def col-names (into-array String ["col1" "col2" "col3"]))
 
-(defn- to-int [coll]
-    (map #(int %) coll)
+
+(defn- rm-obj-id
+    [v]
+    (dissoc v :_id)
 )
 
-
-(def java-to-r-map {
-    String  #(new REXPString %1)
-    Long    #(new REXPInteger %1)
-    Integer #(new REXPInteger %1)   
-    Double  #(new REXPDouble %1)
-    Float   #(new REXPDouble %1)
-    Boolean #(new REXPLogical %1)
-})
-
-(defn java-to-r 
+(defn- obj-to-list 
+    "Converts a clojure object to a R list (in string format)"
     [v]
-    ((get java-to-r-map (class v)) v)
+    (if (map? v) 
+        (let [new-v (rm-obj-id v)]
+            (if (empty? new-v) "list()"
+                (str "list(" (clojure.string/join "," (map (fn [[ik iv]] (str (name ik) "=" (obj-to-list iv))) new-v)) ")")
+            )
+        ) 
+        (if (coll? v) 
+            (if (empty? v) "list()"
+                (str "list(" (clojure.string/join "," (map obj-to-list v))  ")")
+            )
+            (if (string? v) (str "\"" v "\"")
+                (str v)
+            )
+        )
     )
-
+)
 
 (defn learn-rules [houseId]
     "Learn new rules using house data"
-    (let [nodes-info (get-nodes houseId)]
-        (map (fn [key] (new REXPInteger (int-array (reduce #(conj %1 (key %2)) [] nodes-info)))) [:nodeId :nodeClass])
+    (let  [c (new RConnection)]
+        (.eval c (str "states <- " (obj-to-list (get-states houseId))))
+        (.eval c (str "nodesInfo <- " (obj-to-list (get-nodes houseId))))
+        (.eval c "print(states)")
+        (.eval c "print(nodesInfo)")
     )
 )
 
-
-
-(def row1 (int-array [1 2 3]))
-(def row2 (int-array [2 4 6]))
-(def row3 (int-array [4 8 12]))
-(def lst (new REXPList (new RList 
-    (into-array REXP [(new REXPInteger row1) (new REXPInteger row2) (new REXPInteger row3)])
-    col-names
-    )))
-
-(.assign c "testFrame" (new REXPList (new RList 
-    (into-array REXP (learn-rules "58061ca8a567d82155003540"))
-    ;["col1" "col233"]
-    )))
-(.voidEval c "print(testFrame)")
 ;(def )
-;(println (learn-rules "58061ca8a567d82155003540"))
+(println (learn-rules "58061ca8a567d82155003540"))
+
