@@ -5,7 +5,7 @@
 	(:require [server.db :as db]
 			  [server.notification :as notification])
     (:import 
-        [org.rosuda.REngine REXP RList REXPString REXPInteger]
+        [org.rosuda.REngine REXP RList REXPList REXPString REXPInteger REXPDouble REXPLogical]
         [org.rosuda.REngine.Rserve RConnection])
     )
 
@@ -123,18 +123,6 @@
         {} (map-key themap))
 )
 
-(defn learn-rules [houseId]
-    "Learn new rules using house data"
-    (let [nodes-info (reduce #(merge %1 
-        (let [prefix (str (:controllerId %2) "." (:nodeId %2) ".")] 
-            (merge (ids-to-map %2 :dataType "data" prefix) 
-                   (ids-to-map %2 :commandType "command" prefix))
-        )) {} (get-nodes houseId))]
-        (reduce #(assoc %1 %2 
-
-            ) (reduce-kv #(assoc %1 %2 []) {} nodes-info) (get-states houseId))
-    )
-)
 
 (def c (new RConnection))
 (def d (. c eval "rnorm(10)"))
@@ -149,15 +137,43 @@
     (map #(int %) coll)
 )
 
+
+(def java-to-r-map {
+    String  #(new REXPString %1)
+    Long    #(new REXPInteger %1)
+    Integer #(new REXPInteger %1)   
+    Double  #(new REXPDouble %1)
+    Float   #(new REXPDouble %1)
+    Boolean #(new REXPLogical %1)
+})
+
+(defn java-to-r 
+    [v]
+    ((get java-to-r-map (class v)) v)
+    )
+
+
+(defn learn-rules [houseId]
+    "Learn new rules using house data"
+    (let [nodes-info (get-nodes houseId)]
+        (map (fn [key] (new REXPInteger (int-array (reduce #(conj %1 (key %2)) [] nodes-info)))) [:nodeId :nodeClass])
+    )
+)
+
+
+
 (def row1 (int-array [1 2 3]))
 (def row2 (int-array [2 4 6]))
 (def row3 (int-array [4 8 12]))
-(def data-frame (REXP/createDataFrame (new RList 
+(def lst (new REXPList (new RList 
     (into-array REXP [(new REXPInteger row1) (new REXPInteger row2) (new REXPInteger row3)])
     col-names
     )))
 
-(.assign c "testFrame" data-frame)
+(.assign c "testFrame" (new REXPList (new RList 
+    (into-array REXP (learn-rules "58061ca8a567d82155003540"))
+    ;["col1" "col233"]
+    )))
 (.voidEval c "print(testFrame)")
 ;(def )
-(println (learn-rules "58061ca8a567d82155003540"))
+;(println (learn-rules "58061ca8a567d82155003540"))
