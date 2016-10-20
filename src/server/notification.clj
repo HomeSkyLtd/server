@@ -57,7 +57,7 @@
 		(doseq [house-token house-tokens]
 			(future (deliver result (client/post url {:body (build-msg house-token msg) :headers headers})))
 			(if (= 0 ((json/read-str (:body @result)) "success"))
-				(swap! tokens #(update % houseId disj house-token)); TEST THIS AS SOON AS POSSIBLE!
+				(swap! tokens #(update % houseId disj house-token))
 			)
 		)
 	)
