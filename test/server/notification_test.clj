@@ -46,3 +46,10 @@
               nodes [{:nodeId 1} {:nodeId 2} {:nodeId 3}]]
         (is (= 200 (:status (notification/notify-detected-nodes houseId nodes)))))))
     
+(deftest test-invalid-token
+    (testing "if invalid token is removed from tokens map"
+      (notification/init-tokens)
+      (swap! notification/tokens assoc 2 #{"THIS_IS_AN_INVALID_TOKEN"})
+      (notification/notify-learnt-rules 2 [1 2 3])
+      (Thread/sleep 1e4)
+      (is (empty? (@notification/tokens 2)))))
