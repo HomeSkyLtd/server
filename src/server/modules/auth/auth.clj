@@ -144,6 +144,14 @@
     )
 )
 
+(defn get-controllers
+    "Get the controllers associated to the agent's house-id"
+    [obj house-id _]
+    (let [controllers (map #(str (:_id %)) (db/select "agent" {:houseId house-id, :type "controller"}))]
+        {:status 200, :errorMessage "", :controllers controllers}
+    )
+)
+
 (defn set-token
     "Change a token to a new value"
     [obj house-id _]

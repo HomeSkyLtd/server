@@ -149,7 +149,7 @@
                 set-cookie-value (first ((:headers response) "Set-Cookie"))
             ]
             (is (nil? set-cookie-value))
-            (check-body-error response-body 400)
+            (check-body-error response-body 403)
         )
     )
     (testing "logging in as admin"
@@ -203,6 +203,18 @@
             (is (= house-id (:houseId inserted-user)))
         )
     )
+    (testing "getting controllers with none associated"
+        (let [
+            response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+                :params {"payload" (json/write-str
+                    {"function" "getControllers"})}
+                :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+                ))) :key-fn keyword)
+            ]
+            (check-body-ok response-body)
+            (is (empty? (:controllers response-body)))
+        )
+    )
     (testing "associating new controller"
         (let [
                 response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
@@ -218,6 +230,18 @@
             ]
             (check-body-ok response-body)
             (is (= (:houseId admin) (:houseId updated-controller)))
+        )
+    )
+        (testing "getting associated controllers"
+        (let [
+            response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+                :params {"payload" (json/write-str
+                    {"function" "getControllers"})}
+                :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+                ))) :key-fn keyword)
+            ]
+            (check-body-ok response-body)
+            (is (= (count (:controllers response-body)) 1))
         )
     )
     (testing "associating inexisting controller"
