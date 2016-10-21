@@ -42,7 +42,7 @@ MongoClient.connect(url, function(err, db) {
                         }, 
                         {
                             command:{
-                                nodeId: 2,
+                                nodeId: 3,
                                 commandId: 1,
                                 value: 0,
                             },
@@ -184,6 +184,13 @@ MongoClient.connect(url, function(err, db) {
                                         nodeId: 3,
                                         controllerId: "1",
                                         data: {
+                                            1: 1
+                                        }
+                                    }, 
+                                    {
+                                        nodeId: 4,
+                                        controllerId: "1",
+                                        command: {
                                             1: 1
                                         }
                                     }
