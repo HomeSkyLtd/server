@@ -42,12 +42,12 @@ MongoClient.connect(url, function(err, db) {
                         }, 
                         {
                             command:{
-                                nodeId: 3,
+                                nodeId: 4,
                                 commandId: 1,
                                 value: 0,
                             },
-                            controllerId: "1",
-                            clauses: [[{lhs: '2.1', operator: '==', rhs: 0}]],
+                            controllerId    : "1",
+                            clauses: [[{lhs: '3.1', operator: '==', rhs: 0}]],
                             accepted: 0
                         }], 
                         function(err, r) {
@@ -109,7 +109,7 @@ MongoClient.connect(url, function(err, db) {
                                     nodeId: 1,
                                     controllerId: "2",
                                     nodeClass: 3,
-                                    accepted: 1,
+                                    accepted: 0,
                                     alive: 1,
                                     extra: {name: 'Air Conditioner', room: 'Living Room'},
                                     dataType: [{
