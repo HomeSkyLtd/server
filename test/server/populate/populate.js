@@ -32,16 +32,6 @@ MongoClient.connect(url, function(err, db) {
                     collection.insertMany([
                         {
                             command:{
-                                nodeId: 1,
-                                commandId: 1,
-                                value: 20
-                            },
-                            controllerId: "1",
-                            clauses: [[{lhs: '1.1', operator: '>', rhs: 10}]],
-                            accepted: 1
-                        }, 
-                        {
-                            command:{
                                 nodeId: 4,
                                 commandId: 1,
                                 value: 0,
@@ -65,7 +55,7 @@ MongoClient.connect(url, function(err, db) {
                                     dataType: [{
                                         id: 1,
                                         measureStrategy: 2,
-                                        type: 3,
+                                        type: 1,
                                         dataCategory: 1,
                                         unit: 'ºC',
                                         range: [-20, 50]
@@ -106,8 +96,8 @@ MongoClient.connect(url, function(err, db) {
                                     }]
                                 }, 
                                 {
-                                    nodeId: 1,
-                                    controllerId: "2",
+                                    nodeId: 5,
+                                    controllerId: "1",
                                     nodeClass: 3,
                                     accepted: 0,
                                     alive: 1,
@@ -115,14 +105,14 @@ MongoClient.connect(url, function(err, db) {
                                     dataType: [{
                                         id: 1,
                                         measureStrategy: 2,
-                                        type: 3,
+                                        type: 1,
                                         dataCategory: 1,
                                         unit: 'ºC',
                                         range: [-20, 50]
                                     }],
                                     commandType: [{
                                         id: 1,
-                                        type: 3,
+                                        type: 1,
                                         commandCategory: 2,
                                         unit: 'ºC',
                                         range: [-20, 50]
