@@ -152,6 +152,14 @@
     )
 )
 
+(defn get-users
+    "Get the users associated to the admin's house-id"
+    [obj house-id _]
+    (let [users (map #(:username %) (db/select "agent" {:houseId house-id, :type "user"}))]
+        {:status 200, :errorMessage "", :users users}
+    )
+)
+
 (defn set-token
     "Change a token to a new value"
     [obj house-id _]

@@ -189,6 +189,18 @@
             (check-body-error response-body 403)
         )
     )
+    (testing "getting users with none associated"
+        (let [
+            response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+                :params {"payload" (json/write-str
+                    {"function" "getUsers"})}
+                :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+                ))) :key-fn keyword)
+            ]
+            (check-body-ok response-body)
+            (is (empty? (:users response-body)))
+        )
+    )
     (testing "creating new user"
         (let [
                 response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
@@ -201,6 +213,18 @@
             ]
             (check-body-ok response-body)
             (is (= house-id (:houseId inserted-user)))
+        )
+    )
+    (testing "getting associated users"
+        (let [
+            response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
+                :params {"payload" (json/write-str
+                    {"function" "getUsers"})}
+                :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
+                ))) :key-fn keyword)
+            ]
+            (check-body-ok response-body)
+            (is (= (count (:users response-body)) 1))
         )
     )
     (testing "getting controllers with none associated"
@@ -232,7 +256,7 @@
             (is (= (:houseId admin) (:houseId updated-controller)))
         )
     )
-        (testing "getting associated controllers"
+    (testing "getting associated controllers"
         (let [
             response-body (json/read-str (:body (handler/app (assoc (mock/request :post "/")
                 :params {"payload" (json/write-str

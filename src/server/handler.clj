@@ -60,6 +60,7 @@
 		"registerController" auth/register-controller,
 		"setToken" auth/set-token,
 		"getControllers" auth/get-controllers
+		"getUsers" auth/get-users
 
 		"testBase" test-handler,
 		"testUser" test-handler,
@@ -114,6 +115,7 @@
 		"registerController" (permissions "admin"),
 		"setToken" (bit-or (permissions "admin") (permissions "user")),
 		"getControllers" (bit-or (permissions "admin") (permissions "user")),
+		"getUsers" (permissions "admin"),
 
 		"testBase" (permissions "base"),
 		"testUser" (permissions "user"),
