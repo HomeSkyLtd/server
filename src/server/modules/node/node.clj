@@ -3,8 +3,7 @@
     (:require [server.db :as db]
               (monger [core :as mg] [result :as res])
               [validateur.validation :refer :all]
-              [server.notification :as notification])
-    )
+              [server.notification :as notification]))
 
 ;
 ; INTERNAL FUNCTIONS
@@ -13,7 +12,6 @@
 (defn- validate-nodes
     "Take a list of nodes and check if there is a nodeId in all of them"
     [nodes]
-    
     (let [valid-node (validation-set
                         (presence-of :nodeId :message "Missing field"))]
         (reduce #(conj % (valid-node %2)) {} nodes))) 
