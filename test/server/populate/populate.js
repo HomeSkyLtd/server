@@ -36,8 +36,8 @@ MongoClient.connect(url, function(err, db) {
                                 commandId: 1,
                                 value: 0,
                             },
-                            controllerId    : "1",
-                            clauses: [[{lhs: '3.1', operator: '==', rhs: 0}]],
+                            controllerId: "1",
+                            clauses: [[{lhs: '1.1', operator: '==', rhs: 0}]],
                             accepted: 0
                         }], 
                         function(err, r) {
@@ -85,7 +85,7 @@ MongoClient.connect(url, function(err, db) {
                                     nodeClass: 2,
                                     accepted: 0,
                                     alive: 1,
-                                    extra: {name: 'Light Switch', room: 'John\'s Bedroom'},
+                                    extra: {},
                                     dataType: [],
                                     commandType: [{
                                         id: 1,
@@ -101,7 +101,7 @@ MongoClient.connect(url, function(err, db) {
                                     nodeClass: 3,
                                     accepted: 0,
                                     alive: 1,
-                                    extra: {name: 'Air Conditioner', room: 'Living Room'},
+                                    extra: {},
                                     dataType: [{
                                         id: 1,
                                         measureStrategy: 2,
@@ -129,7 +129,7 @@ MongoClient.connect(url, function(err, db) {
                                         nodeId: 4,
                                         controllerId: "1",
                                         nodeClass: 2,
-                                        accepted: 0,
+                                        accepted: 1,
                                         alive: 1,
                                         extra: {name: 'Light Switch', room: 'Bathroom'},
                                         dataType: [],
