@@ -198,7 +198,7 @@
 			(if (zero? (bit-and permission (function-permissions function)))
 				(if (= (permissions "base") permission)
 					(build-response-json 403 "User not logged in")
-					(build-response-json 403 "Unauthorized operation")
+					(build-response-json 401 "Unauthorized operation")
 				)
 				(let [result ((function-handlers function) obj houseId agentId)
 					  session (:session result)
