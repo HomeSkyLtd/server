@@ -115,7 +115,7 @@
 		"registerController" (permissions "admin"),
 		"setToken" (bit-or (permissions "admin") (permissions "user")),
 		"getControllers" (bit-or (permissions "admin") (permissions "user")),
-		"getUsers" (permissions "admin"),
+		"getUsers" (permissions "admin"), (permissions "user")
 
 		"testBase" (permissions "base"),
 		"testUser" (permissions "user"),
