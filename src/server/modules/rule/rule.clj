@@ -109,7 +109,7 @@
 			(if (empty? (db/select (coll-name houseId) key-vals))
 				{:status 400 :errorMessage "DB does not contain obj."}
 				(if (db/remove? (coll-name houseId) key-vals)
-					{:status 200}
+					(notification/notify-new-rules (db/select (coll-name houseId) {}))
 					{:status 500 :errorMessage "DB did not remove value."}
 				)
 			)
