@@ -47,7 +47,7 @@
 				(every? true? (map #(every? (:command %) [:nodeId :commandId :value]) rules)))
 
 				(if (every? true? (map  #(db/insert? (coll-name houseId) (assoc % :accepted 1)) rules))
-					(notification/notify-new-rules rules)
+          (notification/notify-new-rules rules)
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}
@@ -84,7 +84,7 @@
 				result (db/select (coll-name houseId) key-vals)]
 			(if (empty? result)
 				(if (db/update? (coll-name houseId) (dissoc key-vals "accepted") :set {:accepted 1})
-					{:status 200}
+          (notification/notify-new-rules [obj])
 					{:status 500 :errorMessage "DB did not update value."}
 				)
 				{:status 200 :conflictingRule (first result)}
@@ -109,7 +109,7 @@
 			(if (empty? (db/select (coll-name houseId) key-vals))
 				{:status 400 :errorMessage "DB does not contain obj."}
 				(if (db/remove? (coll-name houseId) key-vals)
-					(notification/notify-new-rules (db/select (coll-name houseId) {}))
+          (notification/notify-new-rules [obj])
 					{:status 500 :errorMessage "DB did not remove value."}
 				)
 			)

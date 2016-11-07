@@ -139,7 +139,7 @@
 (defn list-controller-ids
 	"Return a list of distinct controller ids"
 	[rules]
-	(distinct (map #(:controllerId %) rules))
+	(distinct (map :controllerId rules))
 )
 
 (defn build-count
