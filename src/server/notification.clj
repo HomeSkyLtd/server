@@ -135,9 +135,8 @@
   Send a push to user's device to autoatically update the data value on screen"
   [obj houseId]
   (if (every? identity (map #(every? % [:nodeId :dataId :value]) obj))
-    (let [obj# (map #(assoc % :notification "newData") obj)]
-      (doseq [msg obj#]
-        (send-notification houseId msg))
+    (let [msg (json/write-str {:notification "newData" :data obj})]
+      (send-notification houseId msg)
       {:status 200})
     {:status 400 :errorMessage "Not found nodeId or dataId or value"}))
 
@@ -146,9 +145,8 @@
   Send a push to user's device to autoatically update the command value on screen"
   [obj houseId]
   (if (every? identity (map #(every? % [:nodeId :commandId :value]) obj))
-    (let [obj# (map #(assoc % :notification "newCommand") obj)]
-      (doseq [msg obj#]
-        (send-notification houseId msg))
+    (let [msg (json/write-str {:notification "newCommand" :command obj})]
+      (send-notification houseId msg)
       {:status 200})
     {:status 400 :errorMessage "Not found nodeId or commandId or value"}))
 
