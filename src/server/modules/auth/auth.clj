@@ -135,7 +135,11 @@
     (try-let [controller (db/select "agent" {:_id (ObjectId. (obj :controllerId))})]
         (if (empty? controller)
             {:status 400, :errorMessage "invalid controller specified"}
-            (if (db/update? "agent" {:_id (ObjectId. (obj :controllerId))} :set {"houseId" house-id})
+            (if (db/update? "agent" {:_id (ObjectId. (obj :controllerId))} :set 
+                {
+                    "houseId" house-id
+                    "name" (obj :name)
+                })
                 {:status 200}
                 {:status 500 :errorMessage "DB did not update value."}
             )
@@ -147,7 +151,10 @@
 (defn get-controllers
     "Get the controllers associated to the agent's house-id"
     [obj house-id _]
-    (let [controllers (map #(str (:_id %)) (db/select "agent" {:houseId house-id, :type "controller"}))]
+    (let [
+            controllers_db (map #(update % :_id str) (db/select "agent" {:houseId house-id, :type "controller"}))
+            controllers (map #(select-keys % [:_id :name]) controllers_db) 
+        ]
         {:status 200, :errorMessage "", :controllers controllers}
     )
 )

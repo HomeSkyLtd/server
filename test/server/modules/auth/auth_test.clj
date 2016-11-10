@@ -245,7 +245,8 @@
                     :params {"payload" (json/write-str
                         {
                             "function" "registerController",
-                            "controllerId" controller-id
+                            "controllerId" controller-id,
+                            "name" "My first controller"
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)
@@ -254,6 +255,7 @@
             ]
             (check-body-ok response-body)
             (is (= (:houseId admin) (:houseId updated-controller)))
+            (is (= "My first controller" (:name updated-controller)))
         )
     )
     (testing "getting associated controllers"
@@ -274,7 +276,8 @@
                     :params {"payload" (json/write-str
                         {
                             "function" "registerController",
-                            "controllerId" "2"
+                            "controllerId" "2",
+                            "name" "This should not exist"
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)
