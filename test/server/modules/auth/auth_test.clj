@@ -186,7 +186,7 @@
             :params {"payload" (json/write-str {"function" "testController"})}
             :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
             ))) :key-fn keyword)]
-            (check-body-error response-body 403)
+            (check-body-error response-body 401)
         )
     )
     (testing "getting users with none associated"
