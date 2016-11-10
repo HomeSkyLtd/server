@@ -23,7 +23,8 @@ MongoClient.connect(url, function(err, db) {
                         username: 'controller1', 
                         password: 'AYag$/HXl9rALel8=$+CwAzkg5hbEhUHJS5Y3Qy+INyiI=', 
                         type: 'controller', 
-                        houseId: '1'
+                        houseId: '1',
+                        name: "Test controller"
                     }
                 ], function(err, r) {
                     if (err) throw err;

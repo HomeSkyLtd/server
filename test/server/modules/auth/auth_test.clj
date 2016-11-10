@@ -18,7 +18,7 @@
         [
             inserted 
                 (db/insert "agent" {:username "controller1", :password "AYag$s+h8FdzfVnY=$TO2dl9of6ilh5KAdZ3h9cASn3Kk=",
-                :type "controller", :houseId ""} :return-inserted true) ;hash = ctrlpass
+                :type "controller", :houseId "", "name" "My first controller" } :return-inserted true) ;hash = ctrlpass
         ]
         (def controller-id (str (:_id inserted)))
     )
@@ -246,7 +246,6 @@
                         {
                             "function" "registerController",
                             "controllerId" controller-id,
-                            "name" "My first controller"
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)
@@ -277,7 +276,6 @@
                         {
                             "function" "registerController",
                             "controllerId" "2",
-                            "name" "This should not exist"
                         })}
                     :headers {"cookie" (str (first admin-cookie) "=" (second admin-cookie))}
                     ))) :key-fn keyword)

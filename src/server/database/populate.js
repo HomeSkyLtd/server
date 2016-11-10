@@ -17,22 +17,27 @@ MongoClient.connect(url, function(err, db) {
 	            		collection.insertMany([{
 	                        		username: 'controller1', 
 	                        		password: 'AYag$/HXl9rALel8=$+CwAzkg5hbEhUHJS5Y3Qy+INyiI=', 
-	                        		type: 'controller'
+	                        		type: 'controller',
+	                        		name: 'Raspberry controller 1'
 	                    	},
 	                    	{
 	                        		username: 'controller2', 
 	                        		password: 'AYag$/HXl9rALel8=$+CwAzkg5hbEhUHJS5Y3Qy+INyiI=', 
-	                        		type: 'controller'
+	                        		type: 'controller',
+	                        		name: 'Raspberry controller 2'
+
 	                    	},
 	                    	{
 	                        		username: 'controller3', 
 	                        		password: 'AYag$/HXl9rALel8=$+CwAzkg5hbEhUHJS5Y3Qy+INyiI=', 
-	                        		type: 'controller'
+	                        		type: 'controller',
+	                        		name: 'Raspberry controller 3'	                        		
 	                    	},
 	                    	{
 	                        		username: 'controller4', 
 	                        		password: 'AYag$/HXl9rALel8=$+CwAzkg5hbEhUHJS5Y3Qy+INyiI=', 
-	                        		type: 'controller'
+	                        		type: 'controller',
+	                        		name: 'Raspberry controller 1'	                        		
 	                    	}], function(err, r) {
 	        			if (err) throw err;
 	        			console.log(r);

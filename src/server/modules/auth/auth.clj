@@ -4,7 +4,8 @@
         [monger.operators :refer [$in $and]]
         [server.db :as db]
         [crypto.password.pbkdf2 :as passhash]
-        [try-let :refer [try-let]])
+        [try-let :refer [try-let]]
+        [clojure.set :refer[rename-keys]])
     (:import org.bson.types.ObjectId)
 )
 
@@ -138,7 +139,6 @@
             (if (db/update? "agent" {:_id (ObjectId. (obj :controllerId))} :set 
                 {
                     "houseId" house-id
-                    "name" (obj :name)
                 })
                 {:status 200}
                 {:status 500 :errorMessage "DB did not update value."}
@@ -153,7 +153,7 @@
     [obj house-id _]
     (let [
             controllers_db (map #(update % :_id str) (db/select "agent" {:houseId house-id, :type "controller"}))
-            controllers (map #(select-keys % [:_id :name]) controllers_db) 
+            controllers (map #(rename-keys (select-keys % [:_id :name]) {:_id :id}) controllers_db) 
         ]
         {:status 200, :errorMessage "", :controllers controllers}
     )
