@@ -130,6 +130,28 @@
 	)
 )
 
+(defn notify-new-data
+  "Server -> App
+  Send a push to user's device to autoatically update the data value on screen"
+  [obj houseId]
+  (if (every? identity (map #(every? % [:nodeId :dataId :value]) obj))
+    (let [obj# (map #(assoc % :notification "newData") obj)]
+      (doseq [msg obj#]
+        (send-notification houseId msg))
+      {:status 200})
+    {:status 400 :errorMessage "Not found nodeId or dataId or value"}))
+
+(defn notify-new-command
+  "Server -> App
+  Send a push to user's device to autoatically update the command value on screen"
+  [obj houseId]
+  (if (every? identity (map #(every? % [:nodeId :commandId :value]) obj))
+    (let [obj# (map #(assoc % :notification "newCommand") obj)]
+      (doseq [msg obj#]
+        (send-notification houseId msg))
+      {:status 200})
+    {:status 400 :errorMessage "Not found nodeId or commandId or value"}))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;							RULE MODULE FUNCTIONS							;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

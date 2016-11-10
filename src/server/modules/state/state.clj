@@ -28,7 +28,7 @@
 							)
 						)
 					)
-					{:status 200}
+					(notification/notify-new-data data houseId)
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, dataId, value and timestamp."}
@@ -59,7 +59,7 @@
 							)
 						)
 					)
-					{:status 200}
+					(notification/notify-new-command command houseId)
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, commandId, value and timestamp."}
