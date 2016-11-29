@@ -63,6 +63,26 @@
 	)
 )
 
+; (defn- send-on-thread
+; 	"Send a notification in one of the threads of the pool."
+; 	[houseId msg]
+; 	(let
+; 		[
+; 			house-tokens (@tokens houseId)
+; 			auth-key "key=AIzaSyCx7vgnhSyCAwqLaFC59w6Axsmqq5Yrz1M"
+; 			url "https://fcm.googleapis.com/fcm/send"
+; 			headers {"Authorization" auth-key "Content-Type" "application/json"}
+; 		]
+; 		(doseq [house-token house-tokens]
+; 			(let [result client/post url {:body (build-msg house-token msg) :headers headers}]
+; 				(if (= 0 ((json/read-str (:body @result)) "success"))
+; 					(swap! tokens #(update % houseId disj house-token))
+; 				)
+; 			)
+; 		)
+; 	)
+; )
+
 
 (defn- send-notification
 	"Send notifications in a pool of threads."
@@ -187,8 +207,8 @@
 (defn notify-learnt-rules
 	"Server -> App
 	Send a notification to user's device with new learnt rules."
-	[houseId rules]
-	(send-notification houseId (json/write-str {:notification "newRules" :quantity (count rules)}))
+	[houseId rule-count]
+	(send-notification houseId (json/write-str {:notification "newRules" :quantity rule-count}))
 	{:status 200}
 )
 

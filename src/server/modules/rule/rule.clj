@@ -4,10 +4,10 @@
 	server.modules.rule.rule
 	(:require [server.db :as db]
 			  [server.notification :as notification])
-    (:import 
-        [org.rosuda.REngine REXP RList REXPString REXPInteger]
-        [org.rosuda.REngine.Rserve RConnection])
-    )
+	(:import 
+		[org.rosuda.REngine REXP RList REXPString REXPInteger]
+		[org.rosuda.REngine.Rserve RConnection])
+	)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 								PRIVATE FUNCTIONS							;;
@@ -23,14 +23,26 @@
 )
 
 (defn- get-nodes
-    "Returns a list of accepted and online nodes"
-    [house-id]
-    (db/select (str "node_" house-id) { :accepted 1 :alive 1 } :one false))
+	"Returns a list of accepted and online nodes"
+	[house-id]
+	(db/select (str "node_" house-id) { :accepted 1 :alive 1 } :one false))
 
 (defn- get-states
-    "Gets all data from house"
-    [house-id]
-    (db/select (str "all_states_" house-id))
+	"Gets all data from house"
+	[house-id]
+	(db/select (str "all_states_" house-id))
+)
+
+(defn- learn-rules [houseId]
+	"Learn new rules using house data"
+	(let  
+		[
+			c (new RConnection)
+			rule-count (.asInteger (.eval c (str "house.generate.rules(\"" houseId "\")")))
+		]
+		(.close c)
+		(rule-count)
+	)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -47,7 +59,7 @@
 				(every? true? (map #(every? (:command %) [:nodeId :commandId :value]) rules)))
 
 				(if (every? true? (map  #(db/insert? (coll-name houseId) (assoc % :accepted 1)) rules))
-          (notification/notify-new-rules rules)
+		  (notification/notify-new-rules rules)
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, controllerId, commandId, value and clauses."}
@@ -84,7 +96,7 @@
 				result (db/select (coll-name houseId) key-vals)]
 			(if (empty? result)
 				(if (db/update? (coll-name houseId) (dissoc key-vals "accepted") :set {:accepted 1})
-          (notification/notify-new-rules [obj])
+		  (notification/notify-new-rules [obj])
 					{:status 500 :errorMessage "DB did not update value."}
 				)
 				{:status 200 :conflictingRule (first result)}
@@ -109,11 +121,25 @@
 			(if (empty? (db/select (coll-name houseId) key-vals))
 				{:status 400 :errorMessage "DB does not contain obj."}
 				(if (db/remove? (coll-name houseId) key-vals)
-          (notification/notify-new-rules [obj])
+		  (notification/notify-new-rules [obj])
 					{:status 500 :errorMessage "DB did not remove value."}
 				)
 			)
 		)
 		{:status 400 :errorMessage "Missing parameters in obj"}
 	)
+)
+
+(defn force-rule-learning
+	"Trigger the rule-learning procedure"
+	[_ houseId __]
+
+	; Call the R procedure in a thread here. The procedure should run the R script and then
+	; call notification/notify-learnt-rules with the ids as argument
+	(future
+		(let [rule-count (learn-rules houseId)]
+			(notification/notify-learnt-rules houseId rule-count)
+		)
+	)
+	{:status 200 :errorMessage ""}
 )
