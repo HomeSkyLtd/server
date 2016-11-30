@@ -46,42 +46,45 @@
 	(json/write-str {:data {:data msg} :to token})
 )
 
-(defn- send-on-thread
-	"Send a notification in one of the threads of the pool."
-	[houseId msg]
-	(let [house-tokens (@tokens houseId)
-		  auth-key "key=AIzaSyCx7vgnhSyCAwqLaFC59w6Axsmqq5Yrz1M"
-		  url "https://fcm.googleapis.com/fcm/send"
-		  headers {"Authorization" auth-key "Content-Type" "application/json"}
-		  result (promise)]
-		(doseq [house-token house-tokens]
-			(future (deliver result (client/post url {:body (build-msg house-token msg) :headers headers})))
-			(if (= 0 ((json/read-str (:body @result)) "success"))
-				(swap! tokens #(update % houseId disj house-token))
-			)
-		)
-	)
-)
+; Former implementation that runs requests on a thread. This is not needed, since calls to 
+; send-on-thread are already made within a dedicated thread or from an agent
 
 ; (defn- send-on-thread
 ; 	"Send a notification in one of the threads of the pool."
 ; 	[houseId msg]
-; 	(let
-; 		[
-; 			house-tokens (@tokens houseId)
-; 			auth-key "key=AIzaSyCx7vgnhSyCAwqLaFC59w6Axsmqq5Yrz1M"
-; 			url "https://fcm.googleapis.com/fcm/send"
-; 			headers {"Authorization" auth-key "Content-Type" "application/json"}
-; 		]
+; 	(let [house-tokens (@tokens houseId)
+; 		  auth-key "key=AIzaSyCx7vgnhSyCAwqLaFC59w6Axsmqq5Yrz1M"
+; 		  url "https://fcm.googleapis.com/fcm/send"
+; 		  headers {"Authorization" auth-key "Content-Type" "application/json"}
+; 		  result (promise)]
 ; 		(doseq [house-token house-tokens]
-; 			(let [result client/post url {:body (build-msg house-token msg) :headers headers}]
-; 				(if (= 0 ((json/read-str (:body @result)) "success"))
-; 					(swap! tokens #(update % houseId disj house-token))
-; 				)
+; 			(future (deliver result (client/post url {:body (build-msg house-token msg) :headers headers})))
+; 			(if (= 0 ((json/read-str (:body @result)) "success"))
+; 				(swap! tokens #(update % houseId disj house-token))
 ; 			)
 ; 		)
 ; 	)
 ; )
+
+(defn- send-on-thread
+	"Send a notification (no theads involved)."
+	[houseId msg]
+	(let
+		[
+			house-tokens (@tokens houseId)
+			auth-key "key=AIzaSyCx7vgnhSyCAwqLaFC59w6Axsmqq5Yrz1M"
+			url "https://fcm.googleapis.com/fcm/send"
+			headers {"Authorization" auth-key "Content-Type" "application/json"}
+		]
+		(doseq [house-token house-tokens]
+			(let [result (client/post url {:body (build-msg house-token msg) :headers headers})]
+				(if (= 0 ((json/read-str (:body result)) "success"))
+					(swap! tokens #(update % houseId disj house-token))
+				)
+			)
+		)
+	)
+)
 
 
 (defn- send-notification
