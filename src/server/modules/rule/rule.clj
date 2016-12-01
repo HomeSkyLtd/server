@@ -41,7 +41,7 @@
 			rule-count (.asInteger (.eval c (str "house.generate.rules(\"" houseId "\")")))
 		]
 		(.close c)
-		(rule-count)
+		rule-count
 	)
 )
 
