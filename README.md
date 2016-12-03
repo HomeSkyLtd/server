@@ -6,10 +6,12 @@ HTTP server following the Homecloud protocol to communicate between the App and 
 
 The following figure shows how the webserver fits into a home automation system that runs the Rainfall protocol. The left portion of the
 figure represents the local sensor/actuator network, which communicates using the Rainfall protocol. Every communication involving the webserver works on a request/response patterns, dictated by the Homecloud protocol.
-![alt text](https://github.com/HomeSkyLtd/server/blob/master/doc/figures/overall_architecture.png)
+
+<img src="https://github.com/HomeSkyLtd/server/blob/master/doc/figures/overall_architecture.png" width="800" />
 
 The figure below shows the technologies employed in the communications between the system components. Every message destined to the server is transmitted using the HTTP protocol. Notifications to the local controller are made using websockets, since they provide a means of sending messages in real time to the controller. Finally, notifications to the mobile app are made using Firebase.
-![alt text](https://github.com/HomeSkyLtd/server/blob/master/doc/figures/communication_diagram.png)
+
+<img src="https://github.com/HomeSkyLtd/server/blob/master/doc/figures/communication_diagram.png" width="500" />
 
 ## Structure
 The server is implemented in a modular fashion, with each request type being handled by a corresponding module. The main modules are described below.
