@@ -1,6 +1,12 @@
-# server
+# Homecloud REST server
 
-HomeCloud server to communicate between the App and the house's controller.
+HTTP server following the Homecloud protocol to communicate between the App and the house's controller.
+
+## Overall architecture
+
+The following figure shows how the webserver fits into a home automation system that runs the Rainfall protocol. The left portion of the
+figure represents the local sensor/actuator network, which communicates using the Rainfall protocol. Every communication involving the webserver works on a request/response patterns, dictated by the Homecloud protocol.
+![alt text](https://github.com/HomeSkyLtd/server/blob/master/doc/figures/overall_architecture.png)
 
 ## Prerequisites
 
@@ -14,10 +20,4 @@ To start a web server for the application, run:
 
     lein run
 
-## License
 
-Copyright © 2016 FIXME
-
-## Documentation
-
-[Server HomeCloud](http://ec2-52-67-169-17.sa-east-1.compute.amazonaws.com:8080/)
