@@ -1,3 +1,4 @@
+
 # Homecloud REST server
 
 HTTP server following the Homecloud protocol to communicate between the App and the house's controller.
@@ -32,4 +33,6 @@ You will need [Leiningen][] 2.0.0 or above installed.
 
 To start a web server for the application, run `lein run`. This will start a server on port 3000.
 
+## Documentation
 
+For documentation on the public functions of each module, please refer to [this link](https://homeskyltd.github.io/server/)
