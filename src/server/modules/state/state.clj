@@ -28,7 +28,7 @@
 							)
 						)
 					)
-					(notification/notify-new-data data houseId)
+					;(notification/notify-new-data data houseId)
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, dataId, value and timestamp."}
