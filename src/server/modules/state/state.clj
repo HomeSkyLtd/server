@@ -60,7 +60,8 @@
 							)
 						)
 					)
-					(notification/notify-new-command command houseId)
+					;(notification/notify-new-command command houseId)
+					{:status 200}
 					{:status 500 :errorMessage "DB did not insert values."}
 				)
 				{:status 400 :errorMessage "Define nodeId, commandId, value and timestamp."}
