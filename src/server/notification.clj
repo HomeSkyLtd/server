@@ -77,10 +77,13 @@
 			headers {"Authorization" auth-key "Content-Type" "application/json"}
 		]
 		(doseq [house-token house-tokens]
-			(let [result (client/post url {:body (build-msg house-token msg) :headers headers})]
-				(if (= 0 ((json/read-str (:body result)) "success"))
-					(swap! tokens #(update % houseId disj house-token))
-				)
+			(let [result
+						(try
+							(client/post url {:body (build-msg house-token msg) :headers headers})
+							(catch Exception e (println "Fail to connect to Firebase")))]
+				(if result
+					(if (= 0 ((json/read-str (:body result)) "success"))
+						(swap! tokens #(update % houseId disj house-token))))
 			)
 		)
 	)
